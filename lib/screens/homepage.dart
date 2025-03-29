@@ -1,26 +1,31 @@
 import 'package:flutter/material.dart';
 import 'login.dart';
-import 'homepage.dart';
+import 'dashboard.dart';
 
-
-class DashboardPage extends StatelessWidget {
-  const DashboardPage({super.key});
-
+class HomePage extends StatelessWidget {
+  const HomePage({super.key});
 
   void _logout(BuildContext context) {
-    Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context) => const LoginPage()), (route) => false);
-  }
-  void _goToHome(BuildContext context) {
-    Navigator.push(
+    Navigator.pushAndRemoveUntil(
       context,
-      MaterialPageRoute(builder: (context) => const HomePage()),
+      MaterialPageRoute(builder: (context) => const LoginPage()),
+      (route) => false,
     );
   }
+
+  void _goToDashboard(BuildContext context) {
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => const DashboardPage()),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Dashboard'),
+        title: const Text('Homepage'),
+        automaticallyImplyLeading: false, // 👈 Hides default back arrow
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),
@@ -33,11 +38,11 @@ class DashboardPage extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Text('Welcome to the Dashboard!'),
+            const Text('Welcome to the Homepage!'),
             const SizedBox(height: 20),
             ElevatedButton(
-              onPressed: () => _goToHome(context),
-              child: const Text('Go to Home Page'),
+              onPressed: () => _goToDashboard(context),
+              child: const Text('Back to Dashboard'),
             ),
           ],
         ),
@@ -45,4 +50,3 @@ class DashboardPage extends StatelessWidget {
     );
   }
 }
-
