@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'login.dart';
 import 'dashboard.dart';
+import 'profile.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -17,6 +18,13 @@ class HomePage extends StatelessWidget {
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(builder: (context) => const DashboardPage()),
+    );
+  }
+
+  void _goToProfile(BuildContext context) {
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => const ProfilePage()),
     );
   }
 
@@ -43,6 +51,10 @@ class HomePage extends StatelessWidget {
             ElevatedButton(
               onPressed: () => _goToDashboard(context),
               child: const Text('Back to Dashboard'),
+            ),
+            ElevatedButton(
+              onPressed: () => _goToProfile(context),
+              child: const Text('Go to profile'),
             ),
           ],
         ),
