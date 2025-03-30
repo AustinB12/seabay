@@ -55,10 +55,12 @@ class _LoginPageState extends State<LoginPage> {
               decoration: const InputDecoration(labelText: 'Email'),
             ),
             TextField(
-              controller: passwordController,
-              obscureText: true,
-              decoration: const InputDecoration(labelText: 'Password'),
-            ),
+                controller: passwordController,
+                obscureText: true,
+                decoration: const InputDecoration(labelText: 'Password'),
+                onSubmitted: (value) {
+                  _login();
+                }),
             const SizedBox(height: 20),
             ElevatedButton(
               onPressed: _login,
