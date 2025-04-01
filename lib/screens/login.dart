@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
-import 'dashboard.dart';
+import 'package:seabay_app/auth/auth.dart';
+import 'package:seabay_app/screens/create_account.dart';
+import 'package:seabay_app/screens/dashboard.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -14,30 +15,29 @@ class _LoginPageState extends State<LoginPage> {
   final passwordController = TextEditingController();
   String errorMessage = '';
 
+  final authService = AuthService();
+
+  void _goToCreateAccountPage(BuildContext context) {
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => const CreateAccountPage()),
+    );
+  }
+
   Future<void> _login() async {
     final email = emailController.text.trim();
     final password = passwordController.text;
 
     try {
-      final response = await Supabase.instance.client
-          .from('Users')
-          .select()
-          .eq('email', email)
-          .single();
+      authService.signInWithEmailPassword(email, password);
 
-      if (response['password'] == password) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const DashboardPage()),
-        );
-      } else {
-        setState(() {
-          errorMessage = 'Incorrect password';
-        });
-      }
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const DashboardPage()),
+      );
     } catch (e) {
       setState(() {
-        errorMessage = 'Login failed. Please try again.';
+        errorMessage = 'Login failed. Please try again. ${e.toString()}';
       });
     }
   }
@@ -70,6 +70,10 @@ class _LoginPageState extends State<LoginPage> {
               const SizedBox(height: 10),
               Text(errorMessage, style: const TextStyle(color: Colors.red)),
             ],
+            ElevatedButton(
+              onPressed: () => _goToCreateAccountPage(context),
+              child: const Text('Sign Up'),
+            ),
           ],
         ),
       ),

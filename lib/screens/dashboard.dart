@@ -1,23 +1,35 @@
 import 'package:flutter/material.dart';
+import 'package:seabay_app/auth/auth.dart';
 import 'login.dart';
 import 'homepage.dart';
 
-
-class DashboardPage extends StatelessWidget {
+class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
 
+  @override
+  State<DashboardPage> createState() => _DashboardPageState();
+}
+
+class _DashboardPageState extends State<DashboardPage> {
+  final auth = AuthService();
 
   void _logout(BuildContext context) {
-    Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context) => const LoginPage()), (route) => false);
+    auth.signOut();
+    Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (context) => const LoginPage()),
+        (route) => false);
   }
-  void _goToHome(BuildContext context) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => const HomePage()),
-    );
-  }
+
   @override
   Widget build(BuildContext context) {
+    void goToHome() {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const HomePage()),
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Dashboard'),
@@ -36,7 +48,7 @@ class DashboardPage extends StatelessWidget {
             const Text('Welcome to the Dashboard!'),
             const SizedBox(height: 20),
             ElevatedButton(
-              onPressed: () => _goToHome(context),
+              onPressed: () => goToHome(),
               child: const Text('Go to Home Page'),
             ),
           ],
@@ -45,4 +57,3 @@ class DashboardPage extends StatelessWidget {
     );
   }
 }
-
