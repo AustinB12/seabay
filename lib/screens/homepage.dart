@@ -1,10 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:seabay_app/auth/auth.dart';
 import 'login.dart';
 import 'dashboard.dart';
 import 'profile.dart';
 
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
   const HomePage({super.key});
+
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  final auth = AuthService();
+  late Future<List<Post>> _posts;
 
   void _logout(BuildContext context) {
     Navigator.pushAndRemoveUntil(
@@ -29,6 +38,12 @@ class HomePage extends StatelessWidget {
   }
 
   @override
+  void initState() {
+    _posts = auth.getPosts();
+    super.initState();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
@@ -47,6 +62,39 @@ class HomePage extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             const Text('Welcome to the Homepage!'),
+            Container(
+              height: 300,
+              child: FutureBuilder<List<Post>>(
+                  future: _posts,
+                  builder: (BuildContext context, AsyncSnapshot snapshot) {
+                    if (snapshot.connectionState == ConnectionState.done &&
+                        snapshot.hasData) {
+                      final posts = snapshot.data as List<Post>;
+
+                      List<Container> newPosts = [];
+                      for (Post post in posts) {
+                        newPosts.add(Container(
+                            height: 50,
+                            child: Center(
+                                child: Text(
+                                    '${post.title} | ${post.description} | Price: ${post.price} | Active: ${post.isActive ? 'YES' : 'NO'}'))));
+                      }
+                      return ListView(
+                        children: newPosts,
+                      );
+                    } else if (snapshot.connectionState ==
+                            ConnectionState.done &&
+                        snapshot.hasError) {
+                      return Center(
+                          child: Text(
+                        '${snapshot.error} occurred',
+                        style: TextStyle(fontSize: 18),
+                      ));
+                    } else {
+                      return CircularProgressIndicator();
+                    }
+                  }),
+            ),
             const SizedBox(height: 20),
             ElevatedButton(
               onPressed: () => _goToDashboard(context),
