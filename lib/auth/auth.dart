@@ -37,7 +37,6 @@ class AuthService {
   }
 
   void createNewUserProfile(String id) async {
-    print('here\n\n');
     await _client.from('User_Profiles').insert({
       'first_name': null,
       'last_name': null,
