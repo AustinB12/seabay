@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:seabay_app/auth/auth.dart';
+import 'package:seabay_app/api/db_service.dart';
 import 'login.dart';
 import 'dashboard.dart';
 import 'profile.dart';
@@ -12,7 +12,7 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  final auth = AuthService();
+  final db = DbService();
   late Future<List<Post>> _posts;
 
   void _logout(BuildContext context) {
@@ -39,7 +39,7 @@ class _HomePageState extends State<HomePage> {
 
   @override
   void initState() {
-    _posts = auth.getPosts();
+    _posts = db.getPosts();
     super.initState();
   }
 

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:seabay_app/api/db_service.dart';
 import 'package:seabay_app/auth/auth.dart';
 import 'login.dart';
 import 'homepage.dart';
@@ -11,6 +12,7 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
+  final db = DbService();
   final auth = AuthService();
   bool isEditing = false;
   Future<SeabayUser?>? _profile;
@@ -31,7 +33,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
   @override
   void initState() {
-    _profile = auth.getUserProfile();
+    _profile = db.getUserProfile();
     super.initState();
   }
 
