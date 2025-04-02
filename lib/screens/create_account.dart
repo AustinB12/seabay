@@ -22,16 +22,20 @@ class CreateAccountPageState extends State<CreateAccountPage> {
     final email = emailController.text.trim();
     final password = passwordController.text;
 
+    String? newUserId;
+
     try {
-      authService.signUpWithEmailPassword(email, password);
-      Navigator.pop(context);
+      newUserId = await authService.signUpWithEmailPassword(email, password);
     } catch (e) {
       setState(() {
         errorMessage =
             'Account creation failed. Please try again. ${e.toString()}';
       });
     }
-    _goToHome();
+    if (newUserId != null) {
+      authService.createNewUserProfile(newUserId);
+      _goToHome();
+    }
   }
 
   String? validateEmail(String? value) {
@@ -43,6 +47,7 @@ class CreateAccountPageState extends State<CreateAccountPage> {
   }
 
   void _goToHome() {
+    Navigator.pop(context);
     Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => const HomePage()),
@@ -67,43 +72,49 @@ class CreateAccountPageState extends State<CreateAccountPage> {
         ],
       ),
       body: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          children: [
-            TextFormField(
-                controller: emailController,
-                decoration: const InputDecoration(labelText: 'Email'),
-                validator: (value) => validateEmail(value)),
-            TextFormField(
-              controller: passwordController,
-              obscureText: true,
-              decoration: const InputDecoration(labelText: 'Password'),
+          padding: const EdgeInsets.all(20.0),
+          child: Form(
+            autovalidateMode: AutovalidateMode.onUnfocus,
+            child: Column(
+              children: [
+                TextFormField(
+                  controller: emailController,
+                  decoration: const InputDecoration(labelText: 'Email'),
+                  validator: (String? value) {
+                    return validateEmail(value);
+                  },
+                ),
+                TextFormField(
+                  controller: passwordController,
+                  obscureText: true,
+                  decoration: const InputDecoration(labelText: 'Password'),
+                ),
+                TextFormField(
+                  controller: confirmPasswordController,
+                  obscureText: true,
+                  decoration:
+                      const InputDecoration(labelText: 'Confirm Password'),
+                  validator: (value) =>
+                      passwordController.text == confirmPasswordController.text
+                          ? null
+                          : 'Passwords must match',
+                ),
+                const SizedBox(height: 20),
+                if (errorMessage.isNotEmpty) ...[
+                  const SizedBox(height: 10),
+                  Text(errorMessage, style: const TextStyle(color: Colors.red)),
+                ],
+                ElevatedButton(
+                  onPressed: () => _createNewAccount(),
+                  child: const Text('Create Account'),
+                ),
+                ElevatedButton(
+                  onPressed: () => _goToLoginPage(),
+                  child: const Text('Back'),
+                ),
+              ],
             ),
-            TextFormField(
-              controller: confirmPasswordController,
-              obscureText: true,
-              decoration: const InputDecoration(labelText: 'Confirm Password'),
-              validator: (value) =>
-                  passwordController == confirmPasswordController
-                      ? null
-                      : 'Passwords must match',
-            ),
-            const SizedBox(height: 20),
-            if (errorMessage.isNotEmpty) ...[
-              const SizedBox(height: 10),
-              Text(errorMessage, style: const TextStyle(color: Colors.red)),
-            ],
-            ElevatedButton(
-              onPressed: () => _createNewAccount(),
-              child: const Text('Create Account'),
-            ),
-            ElevatedButton(
-              onPressed: () => _goToLoginPage(),
-              child: const Text('Back'),
-            ),
-          ],
-        ),
-      ),
+          )),
     );
   }
 }
