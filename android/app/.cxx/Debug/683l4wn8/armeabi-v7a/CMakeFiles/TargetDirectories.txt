@@ -1,2 +1,0 @@
-/Users/mac/Seabay/android/app/.cxx/Debug/683l4wn8/armeabi-v7a/CMakeFiles/edit_cache.dir
-/Users/mac/Seabay/android/app/.cxx/Debug/683l4wn8/armeabi-v7a/CMakeFiles/rebuild_cache.dir
