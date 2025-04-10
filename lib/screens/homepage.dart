@@ -88,6 +88,10 @@ void toggleWishlist(int postId) async {
 
 
   void _logout(BuildContext context) {
+
+    //TODO actually log out the user
+
+    
     Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(builder: (context) => const LoginPage()),
