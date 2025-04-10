@@ -7,6 +7,9 @@
 .buildlog/
 .history
 .env
+Debug
+.idea/
+.idea/workspace.xml
 
 
 
