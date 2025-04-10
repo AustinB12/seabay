@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:seabay_app/auth/auth.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'login.dart';
 import 'dashboard.dart';
 import 'profile.dart';
+import 'create_post.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -16,6 +18,7 @@ class _HomePageState extends State<HomePage> {
   List<Map<String, dynamic>> posts = [];
   List<int> wishlistPostIds = []; // 👈 Simple list of IDs
   bool isLoading = true;
+  final auth = AuthService();
 
   @override
   void initState() {
@@ -113,6 +116,22 @@ void toggleWishlist(int postId) async {
     );
   }
 
+void _goToCreatePost(BuildContext context){
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const CreatePostPage()),
+    );
+  } 
+
+  void _deletePost(int postId) async {
+    await auth.deletePost(postId);
+
+    setState((){
+      // posts = auth.getPosts();
+      // TODO need to fix this
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -162,6 +181,10 @@ void toggleWishlist(int postId) async {
                   ),
                 ),
                 const SizedBox(height: 20),
+                ElevatedButton(
+              onPressed: () => _goToCreatePost(context),
+              child: const Text('Create Post'),
+            ),
                 ElevatedButton(
                   onPressed: () => _goToDashboard(context),
                   child: const Text('Back to Dashboard'),
