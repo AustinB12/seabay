@@ -3,6 +3,7 @@ import 'package:seabay_app/auth/auth.dart';
 import 'login.dart';
 import 'dashboard.dart';
 import 'profile.dart';
+import 'create_post.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -37,6 +38,21 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  void _goToCreatePost(BuildContext context){
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const CreatePostPage()),
+    );
+  }
+
+  void _deletePost(int postId) async {
+    await auth.deletePost(postId);
+
+    setState((){
+      _posts = auth.getPosts();
+    });
+  }
+
   @override
   void initState() {
     _posts = auth.getPosts();
@@ -48,7 +64,7 @@ class _HomePageState extends State<HomePage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Homepage'),
-        automaticallyImplyLeading: false, // 👈 Hides default back arrow
+        automaticallyImplyLeading: false,
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),
@@ -70,14 +86,19 @@ class _HomePageState extends State<HomePage> {
                     if (snapshot.connectionState == ConnectionState.done &&
                         snapshot.hasData) {
                       final posts = snapshot.data as List<Post>;
-
+                      
+                      //final currentUserId = auth.getCurrentUserId();
                       List<Container> newPosts = [];
                       for (Post post in posts) {
                         newPosts.add(Container(
                             height: 50,
                             child: Center(
                                 child: Text(
-                                    '${post.title} | ${post.description} | Price: ${post.price} | Active: ${post.isActive ? 'YES' : 'NO'}'))));
+                                    '${post.title} | ${post.description} | Price: ${post.price} | Active: ${post.isActive ? 'YES' : 'NO'}'
+                                    )
+                                  )
+                                )
+                              );
                       }
                       return ListView(
                         children: newPosts,
@@ -96,6 +117,10 @@ class _HomePageState extends State<HomePage> {
                   }),
             ),
             const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: () => _goToCreatePost(context),
+              child: const Text('Create Post'),
+            ),
             ElevatedButton(
               onPressed: () => _goToDashboard(context),
               child: const Text('Back to Dashboard'),

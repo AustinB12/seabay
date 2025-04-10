@@ -45,6 +45,23 @@ class AuthService {
     });
   }
 
+  Future<void> createPost(Post post) async {
+    final userId = getCurrentUserId();
+
+    await _client.from('Posts').insert({
+      'title': post.title,
+      'description': post.description,
+      'price': post.price,
+      'is_active': post.isActive,
+      'user_id': userId,
+    });
+}
+
+Future<void> deletePost(int postId) async {
+  await _client.from('Posts').delete().match({'id': postId});
+}
+
+
 //! ============= Data =============
 
   Future<SeabayUser?> getUserProfile() async {
@@ -64,8 +81,10 @@ class AuthService {
   Future<List<Post>> getPosts() async {
     final results = await _client
         .from('Posts')
-        .select('title, description, price, is_active')
+        .select('id, title, description, price, is_active')
         .limit(20);
+    
+    print('Fetched Posts: $results');
 
     List<Post> posts = [];
 
@@ -73,10 +92,12 @@ class AuthService {
 
     for (var post in results) {
       Post newPost = Post(
+          id: post["id"],
           title: post['title'],
           description: post['description'],
           price: post['price'],
-          isActive: post['is_active']);
+          isActive: post['is_active'],
+          userId: post['user_id']);
       posts.add(newPost);
     }
 
@@ -113,14 +134,18 @@ class WishList {
 }
 
 class Post {
+  int? id;
   String title = '';
   String description = '';
   int price = 0;
   bool isActive = false;
+  String? userId;
 
   Post(
-      {required this.title,
+      {required this.id,
+      required this.title,
       required this.description,
       required this.price,
-      required this.isActive});
+      required this.isActive,
+      this.userId});
 }
