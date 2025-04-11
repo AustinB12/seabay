@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:seabay_app/api/db_service.dart';
-import 'package:seabay_app/auth/auth.dart';
+import 'package:seabay_app/api/db_service.dart' as db_service;
+import 'package:seabay_app/auth/auth.dart' as auth_service;
 import 'login.dart';
 import 'homepage.dart';
 
@@ -12,10 +12,10 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
-  final db = DbService();
-  final auth = AuthService();
+  final db = db_service.DbService();
+  final auth = auth_service.AuthService();
   bool isEditing = false;
-  Future<SeabayUser?>? _profile;
+  Future<db_service.SeabayUser?>? _profile;
 
   void _logout(BuildContext context) {
     Navigator.pushAndRemoveUntil(
@@ -66,10 +66,10 @@ class _ProfilePageState extends State<ProfilePage> {
             Builder(
                 builder: (BuildContext builder) =>
                     isEditing ? Text('Editing') : Text('Not editing')),
-            FutureBuilder<SeabayUser?>(
+            FutureBuilder<db_service.SeabayUser?>(
                 future: _profile,
                 builder: (BuildContext context,
-                    AsyncSnapshot<SeabayUser?> snapshot) {
+                    AsyncSnapshot<db_service.SeabayUser?> snapshot) {
                   if (snapshot.connectionState == ConnectionState.done) {
                     return Text(
                         '${snapshot.data?.firstName} ${snapshot.data?.lastName}');
