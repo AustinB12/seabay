@@ -33,7 +33,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
   @override
   void initState() {
-    _profile = db.getUserProfile();
+    _profile = db.getCurrentUserProfile();
     super.initState();
   }
 

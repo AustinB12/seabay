@@ -115,6 +115,15 @@ class DbService {
 
     return result.isEmpty;
   }
+
+  //* Add Post To Wishlist
+  Future<bool> addPostToWishlist(int postId, int wishlistId) async {
+    final result = await _client
+        .from('Posts_To_Wishlists')
+        .insert({'wishlist_id': wishlistId, 'post_id': postId}).select();
+
+    return result.isNotEmpty;
+  }
 }
 
 //! ============= TYPES =============
