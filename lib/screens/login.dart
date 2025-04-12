@@ -29,19 +29,10 @@ class _LoginPageState extends State<LoginPage> {
     final password = passwordController.text;
 
     try {
-      final response = await authService.signInWithEmailPassword(email, password);
+      final response =
+          await authService.signInWithEmailPassword(email, password);
 
       if (response.user == null) {
-        setState(() {
-          errorMessage = 'Login failed. Please try again.';
-        });
-        return;
-      }
-      if (response.user != null) {
-        // User is logged in successfully
-        final userId = response.user?.id;
-        authService.createNewUserProfile(userId!);
-      } else {
         setState(() {
           errorMessage = 'Login failed. Please try again.';
         });

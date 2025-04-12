@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:seabay_app/api/db_service.dart';
 import 'package:seabay_app/auth/auth.dart';
-import 'homepage.dart'; 
+import 'homepage.dart';
 
 class CreatePostPage extends StatefulWidget {
   const CreatePostPage({super.key});
@@ -16,38 +17,37 @@ class _CreatePostPageState extends State<CreatePostPage> {
   String errorMessage = '';
   String successMessage = '';
 
-  final authService = AuthService();
+  final db = DbService();
 
   Future<void> _createPost() async {
     final title = _titleController.text.trim();
-    final description =_descriptionController.text.trim();
+    final description = _descriptionController.text.trim();
     final price = (double.tryParse(_priceController.text) ?? 0.0).toInt();
 
-    if(title.isEmpty || description.isEmpty || price == 0){
-      setState((){
+    if (title.isEmpty || description.isEmpty || price == 0) {
+      setState(() {
         errorMessage = 'Please fill in all fields.';
       });
       return;
     }
 
     final newPost = Post(
-      id: null,
       title: title,
       description: description,
       price: price,
       isActive: true, // Default value (active post)
-      userId: authService.getCurrentUserId(),
+      userId: db.getCurrentUserId() as String,
     );
 
     try {
-      await authService.createPost(newPost);
+      await db.createPost(newPost);
       //Navigator.pop(context);
-      setState((){
+      setState(() {
         errorMessage = '';
         successMessage = 'Post made successfully! ';
       });
-    } catch (e){
-      setState((){
+    } catch (e) {
+      setState(() {
         errorMessage = 'Failed to create post. $e';
       });
     }
@@ -59,7 +59,6 @@ class _CreatePostPageState extends State<CreatePostPage> {
       MaterialPageRoute(builder: (context) => const HomePage()),
     );
   }
-  
 
   @override
   Widget build(BuildContext context) {
@@ -89,11 +88,11 @@ class _CreatePostPageState extends State<CreatePostPage> {
               onPressed: _createPost,
               child: const Text('Create Post'),
             ),
-            if(errorMessage.isNotEmpty)
-            Text(
-              errorMessage,
-              style: TextStyle(color: Colors.red),
-            ),
+            if (errorMessage.isNotEmpty)
+              Text(
+                errorMessage,
+                style: TextStyle(color: Colors.red),
+              ),
             ElevatedButton(
               onPressed: goToHome,
               child: const Text('Go to Home Page'),
@@ -104,4 +103,3 @@ class _CreatePostPageState extends State<CreatePostPage> {
     );
   }
 }
-

@@ -28,6 +28,10 @@ class DbService {
     return SeabayUser.fromMap(results.first);
   }
 
+  Future createNewUserProfile(String authId) async {
+    await _client.from('User_Profiles').insert({'auth_id': authId});
+  }
+
   //* Get Posts
   Future<List<Post>> getPosts() async {
     final results = await _client
@@ -50,6 +54,16 @@ class DbService {
     if (results.isEmpty) return null;
 
     return Post.fromMap(results.first);
+  }
+
+  //* Create Post
+  Future createPost(Post newPost) async {
+    await _client.from('Posts').insert({
+      'title': newPost.title,
+      'description': newPost.description,
+      'price': newPost.price,
+      'user_id': newPost.userId
+    });
   }
 
   //* Update Post
@@ -190,7 +204,7 @@ class WishList {
 }
 
 class Post {
-  int id;
+  int? id;
   String title = '';
   String? description = '';
   int? price = 0;
@@ -199,7 +213,7 @@ class Post {
 
   Post(
       {required this.title,
-      required this.id,
+      this.id,
       this.description,
       this.price,
       required this.isActive,

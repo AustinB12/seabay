@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:seabay_app/api/db_service.dart';
 import 'package:seabay_app/auth/auth.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'login.dart';
@@ -18,7 +19,9 @@ class _HomePageState extends State<HomePage> {
   List<Map<String, dynamic>> posts = [];
   List<int> wishlistPostIds = []; // 👈 Simple list of IDs
   bool isLoading = true;
+
   final auth = AuthService();
+  final db = DbService();
 
   @override
   void initState() {
@@ -28,9 +31,7 @@ class _HomePageState extends State<HomePage> {
 
   void loadPostsAndWishlist() async {
     try {
-      final postData = await Supabase.instance.client
-          .from("Posts")
-          .select();
+      final postData = await Supabase.instance.client.from("Posts").select();
 
       final wishlistData = await Supabase.instance.client
           .from("Wish_Lists")
@@ -39,7 +40,8 @@ class _HomePageState extends State<HomePage> {
 
       setState(() {
         posts = List<Map<String, dynamic>>.from(postData);
-        wishlistPostIds = wishlistData.map<int>((item) => item['post_id'] as int).toList();
+        wishlistPostIds =
+            wishlistData.map<int>((item) => item['post_id'] as int).toList();
         isLoading = false;
       });
     } catch (error) {
@@ -50,51 +52,48 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-void toggleWishlist(int postId) async {
-  // Find the post
-  final post = posts.firstWhere((p) => p['id'] == postId);
+  void toggleWishlist(int postId) async {
+    // Find the post
+    final post = posts.firstWhere((p) => p['id'] == postId);
 
-  // Don't allow adding your own post
-  if (post['user_id'] == currentUser!.id) {
-    print("Can't wishlist your own post.");
-    return;
-  }
-
-  bool alreadyInWishlist = wishlistPostIds.contains(postId);
-
-  // Update UI first
-  setState(() {
-    if (alreadyInWishlist) {
-      wishlistPostIds.remove(postId);
-    } else {
-      wishlistPostIds.add(postId);
+    // Don't allow adding your own post
+    if (post['user_id'] == currentUser!.id) {
+      print("Can't wishlist your own post.");
+      return;
     }
-  });
 
-  try {
-    if (alreadyInWishlist) {
-      await Supabase.instance.client
-          .from('Wish_Lists')
-          .delete()
-          .eq('id', postId)
-          .eq('user_id', currentUser!.id);
-    } else {
-      await Supabase.instance.client.from('Wish_Lists').insert({
-        'id': postId,
-        'user_id': currentUser!.id,
-      });
+    bool alreadyInWishlist = wishlistPostIds.contains(postId);
+
+    // Update UI first
+    setState(() {
+      if (alreadyInWishlist) {
+        wishlistPostIds.remove(postId);
+      } else {
+        wishlistPostIds.add(postId);
+      }
+    });
+
+    try {
+      if (alreadyInWishlist) {
+        await Supabase.instance.client
+            .from('Wish_Lists')
+            .delete()
+            .eq('id', postId)
+            .eq('user_id', currentUser!.id);
+      } else {
+        await Supabase.instance.client.from('Wish_Lists').insert({
+          'id': postId,
+          'user_id': currentUser!.id,
+        });
+      }
+    } catch (e) {
+      print('Error updating wishlist: $e');
     }
-  } catch (e) {
-    print('Error updating wishlist: $e');
   }
-}
-
 
   void _logout(BuildContext context) {
+    auth.signOut();
 
-    //TODO actually log out the user
-
-    
     Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(builder: (context) => const LoginPage()),
@@ -116,20 +115,15 @@ void toggleWishlist(int postId) async {
     );
   }
 
-void _goToCreatePost(BuildContext context){
+  void _goToCreatePost(BuildContext context) {
     Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => const CreatePostPage()),
     );
-  } 
+  }
 
   void _deletePost(int postId) async {
-    await auth.deletePost(postId);
-
-    setState((){
-      // posts = auth.getPosts();
-      // TODO need to fix this
-    });
+    await db.deletePostById(postId);
   }
 
   @override
@@ -166,25 +160,26 @@ void _goToCreatePost(BuildContext context){
                         subtitle: Text(
                             '${post['description']} | Price: ${post['price']} | Active: ${post['is_active'] ? 'YES' : 'NO'}'),
                         trailing: post['user_id'] != currentUser!.id
-                        ? IconButton(
-                            icon: Icon(
-                              isWishlisted
-                                  ? Icons.favorite
-                                  : Icons.favorite_border,
-                              color: isWishlisted ? Colors.red : Colors.grey,
-                            ),
-                            onPressed: () => toggleWishlist(postId),
-                          )
-                        : null,
+                            ? IconButton(
+                                icon: Icon(
+                                  isWishlisted
+                                      ? Icons.favorite
+                                      : Icons.favorite_border,
+                                  color:
+                                      isWishlisted ? Colors.red : Colors.grey,
+                                ),
+                                onPressed: () => toggleWishlist(postId),
+                              )
+                            : null,
                       );
                     },
                   ),
                 ),
                 const SizedBox(height: 20),
                 ElevatedButton(
-              onPressed: () => _goToCreatePost(context),
-              child: const Text('Create Post'),
-            ),
+                  onPressed: () => _goToCreatePost(context),
+                  child: const Text('Create Post'),
+                ),
                 ElevatedButton(
                   onPressed: () => _goToDashboard(context),
                   child: const Text('Back to Dashboard'),
