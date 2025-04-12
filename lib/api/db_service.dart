@@ -18,18 +18,46 @@ class DbService {
     return SeabayUser.fromMap(results.first);
   }
 
-  Future<SeabayUser?> getCurrentUserProfile() async {
-    var userId = getCurrentUserId();
+  String? userId;
+
+  DbService() : userId = null;
+
+  static String? get currentUserId =>
+      Supabase.instance.client.auth.currentSession?.user.id;
+
+  final usersPosts = Supabase.instance.client
+      .from('Posts')
+      .select('*')
+      .eq('user_id', currentUserId as String)
+      .asStream();
+
+  final allPosts =
+      Supabase.instance.client.from('Posts').select('*').asStream();
+
+  final profileStream = Supabase.instance.client
+      .from('Posts')
+      .select('*')
+      .eq('user_id', currentUserId as String)
+      .asStream();
+
+  Future<SeabayUser> getCurrentUserProfile() async {
     final results = await _client
         .from('User_Profiles')
         .select('id, first_name, last_name, auth_id')
-        .eq('auth_id', userId as String);
+        .eq('auth_id', currentUserId as String);
 
     return SeabayUser.fromMap(results.first);
   }
 
   Future createNewUserProfile(String authId) async {
     await _client.from('User_Profiles').insert({'auth_id': authId});
+  }
+
+  Future updateUserProfile(SeabayUser user) async {
+    await _client
+        .from('User_Profiles')
+        .update({'first_name': user.firstName, 'last_name': user.lastName}).eq(
+            'auth_id', currentUserId as String);
   }
 
   //* Get Posts
@@ -143,22 +171,19 @@ class DbService {
 //! ============= TYPES =============
 class SeabayUser {
   int? id;
-  String authId;
+  String? authId;
   String firstName;
   String lastName;
 
   SeabayUser(
-      {this.id,
-      required this.firstName,
-      required this.lastName,
-      required this.authId});
+      {this.id, required this.firstName, required this.lastName, this.authId});
 
   factory SeabayUser.fromMap(Map<String, dynamic> map) {
     return SeabayUser(
       id: map['id'] as int,
-      authId: map['authId'] as String,
-      firstName: map['firstName'] as String,
-      lastName: map['lastName'] as String,
+      authId: map['auth_id'] as String,
+      firstName: map['first_name'] as String,
+      lastName: map['last_name'] as String,
     );
   }
 

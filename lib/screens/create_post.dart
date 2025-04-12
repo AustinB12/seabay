@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:seabay_app/api/db_service.dart';
-import 'package:seabay_app/auth/auth.dart';
 import 'homepage.dart';
 
 class CreatePostPage extends StatefulWidget {

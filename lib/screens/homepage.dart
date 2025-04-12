@@ -122,9 +122,9 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  void _deletePost(int postId) async {
-    await db.deletePostById(postId);
-  }
+  // void _deletePost(int postId) async {
+  //   await db.deletePostById(postId);
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -134,12 +134,19 @@ class _HomePageState extends State<HomePage> {
         automaticallyImplyLeading: false,
         actions: [
           IconButton(
+            icon: const Icon(Icons.person),
+            onPressed: () => _goToProfile(context),
+            tooltip: 'Profile Page',
+          ),
+          IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () => _logout(context),
             tooltip: 'Logout',
           ),
         ],
       ),
+      floatingActionButton: FloatingActionButton(
+          onPressed: () => _goToCreatePost, child: const Icon(Icons.add)),
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
           : Column(
@@ -176,10 +183,6 @@ class _HomePageState extends State<HomePage> {
                   ),
                 ),
                 const SizedBox(height: 20),
-                ElevatedButton(
-                  onPressed: () => _goToCreatePost(context),
-                  child: const Text('Create Post'),
-                ),
                 ElevatedButton(
                   onPressed: () => _goToDashboard(context),
                   child: const Text('Back to Dashboard'),
