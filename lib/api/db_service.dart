@@ -145,6 +145,15 @@ class DbService {
     return WishList.fromMap(results.first);
   }
 
+  //* Create Wishlist
+  Future createWishlist(String name, String description) async {
+    await _client.from('Wish_Lists').insert({
+      'name': name,
+      'description': description,
+      'user_id': currentUserId as String
+    });
+  }
+
   //* Update Wishlist
   Future<bool> updateWishlist(WishList wishlist) async {
     final results = await _client.from('Wish_Lists').update({

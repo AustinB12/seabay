@@ -16,10 +16,12 @@ class _ProfilePageState extends State<ProfilePage> {
   final auth = AuthService();
   bool isEditing = false;
   late Future<SeabayUser> _profile;
+  late Future<List<WishList>> _wishlists;
 
   final firstNameController = TextEditingController();
-
   final lastNameController = TextEditingController();
+  final wlNameController = TextEditingController();
+  final wlDescController = TextEditingController();
 
   void _logout(BuildContext context) {
     auth.signOut();
@@ -78,9 +80,84 @@ class _ProfilePageState extends State<ProfilePage> {
             ));
   }
 
+  void deleteWishlistConfirmation(WishList wl) {
+    showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+                title: Text("Delete ${wl.name} Wishlist?"),
+                content: const Text("This cannot be undone."),
+                actions: [
+                  IconButton(
+                    onPressed: () async {
+                      Navigator.pop(context);
+                      await deleteWishlist(wl.id);
+                      setState(() {
+                        _wishlists = db.getWishlists();
+                      });
+                    },
+                    icon: Icon(Icons.check),
+                    tooltip: 'Confirm',
+                  ),
+                  IconButton(
+                    onPressed: () async {
+                      Navigator.pop(context);
+                    },
+                    icon: Icon(Icons.close),
+                    tooltip: 'Cancel',
+                  ),
+                ]));
+  }
+
+  Future<void> deleteWishlist(int id) async {
+    await db.deleteWishlistById(id);
+  }
+
+  void addWishlist() {
+    showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+              title: const Text('New Wishlist'),
+              content: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text('Wishlist Name:'),
+                  TextField(
+                    controller: wlNameController,
+                  ),
+                  const Text('Wishlist Description:'),
+                  TextField(
+                    controller: wlDescController,
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                    },
+                    child: const Text('Cancel')),
+                TextButton(
+                  onPressed: () async {
+                    Navigator.pop(context);
+                    await db.createWishlist(
+                        wlNameController.text, wlDescController.text);
+                    wlDescController.clear();
+                    wlNameController.clear();
+                    setState(() {
+                      _wishlists = db.getWishlists();
+                    });
+                  },
+                  child: const Text('Save'),
+                ),
+              ],
+            ));
+  }
+
   @override
   void initState() {
     _profile = db.getCurrentUserProfile();
+    _wishlists = db.getWishlists();
     super.initState();
   }
 
@@ -149,6 +226,48 @@ class _ProfilePageState extends State<ProfilePage> {
                     return CircularProgressIndicator();
                   }
                 }),
+            RichText(
+                text: TextSpan(
+                    text: 'Wishlists:',
+                    style: TextStyle(
+                        fontWeight: FontWeight.bold, color: Colors.white))),
+            FutureBuilder<List<WishList>>(
+                future: _wishlists,
+                builder: (builder, AsyncSnapshot<List<WishList>> snapshot) {
+                  if (snapshot.connectionState == ConnectionState.done) {
+                    final wishlists = snapshot.data;
+
+                    if (wishlists!.isEmpty) {
+                      return const Text('No Wishlists Yet');
+                    }
+                    return Container(
+                        height: 300,
+                        child: ListView.builder(
+                            itemCount: wishlists.length,
+                            itemBuilder: (BuildContext context, int index) {
+                              final wl = wishlists[index];
+                              return ListTile(
+                                  title: Text(wl.name),
+                                  subtitle: Text(wl.description),
+                                  trailing: SizedBox(
+                                      width: 100,
+                                      child: Row(children: [
+                                        IconButton(
+                                            onPressed: null,
+                                            icon: Icon(Icons.add)),
+                                        IconButton(
+                                            onPressed: () =>
+                                                deleteWishlistConfirmation(wl),
+                                            icon: Icon(Icons.delete)),
+                                      ])));
+                            }));
+                  } else {
+                    return CircularProgressIndicator();
+                  }
+                }),
+            ElevatedButton(
+                onPressed: () => addWishlist(),
+                child: const Text('Add Wishlist'))
           ],
         )));
   }
