@@ -16,8 +16,9 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   final currentUser = Supabase.instance.client.auth.currentUser;
-  List<Map<String, dynamic>> posts = [];
+  List<Post> posts = [];
   List<int> wishlistPostIds = []; // 👈 Simple list of IDs
+  List<WishList> usersWishlists = [];
   bool isLoading = true;
 
   final auth = AuthService();
@@ -31,17 +32,12 @@ class _HomePageState extends State<HomePage> {
 
   void loadPostsAndWishlist() async {
     try {
-      final postData = await Supabase.instance.client.from("Posts").select();
-
-      final wishlistData = await Supabase.instance.client
-          .from("Wish_Lists")
-          .select()
-          .eq('user_id', currentUser!.id);
+      List<WishList> wishlistData = await db.getWishlists();
+      List<Post> postsData = await db.getPosts();
 
       setState(() {
-        posts = List<Map<String, dynamic>>.from(postData);
-        wishlistPostIds =
-            wishlistData.map<int>((item) => item['post_id'] as int).toList();
+        posts = postsData;
+        usersWishlists = wishlistData;
         isLoading = false;
       });
     } catch (error) {
@@ -52,43 +48,62 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  void toggleWishlist(int postId) async {
-    // Find the post
-    final post = posts.firstWhere((p) => p['id'] == postId);
+  void pickWishlist(int postId) {
+    showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+              title: const Text('Choose a wishlist'),
+              content: ListView.builder(
+                  itemCount: usersWishlists.length,
+                  itemBuilder: (context, index) {
+                    final wl = usersWishlists[index];
 
-    // Don't allow adding your own post
-    if (post['user_id'] == currentUser!.id) {
-      print("Can't wishlist your own post.");
-      return;
-    }
+                    return ListTile(
+                      title: Text(wl.name),
+                      subtitle: Text(wl.description),
+                      onTap: () => toggleWishlist(postId, wl.id),
+                    );
+                  }),
+              actions: [
+                TextButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                    },
+                    child: const Text('Cancel')),
+              ],
+            ));
+  }
 
-    bool alreadyInWishlist = wishlistPostIds.contains(postId);
+  void toggleWishlist(int postId, int wishlistId) async {
+    db.addPostToWishlist(postId, wishlistId);
 
-    // Update UI first
-    setState(() {
-      if (alreadyInWishlist) {
-        wishlistPostIds.remove(postId);
-      } else {
-        wishlistPostIds.add(postId);
-      }
-    });
+    // bool alreadyInWishlist = wishlistPostIds.contains(postId);
 
-    try {
-      if (alreadyInWishlist) {
-        await Supabase.instance.client
-            .from('Wish_Lists')
-            .delete()
-            .eq('id', postId)
-            .eq('user_id', currentUser!.id);
-      } else {
-        await Supabase.instance.client.from('Wish_Lists').insert({
-          'id': postId,
-          'user_id': currentUser!.id,
-        });
-      }
-    } catch (e) {
-      print('Error updating wishlist: $e');
-    }
+    // // Update UI first
+    // setState(() {
+    //   if (alreadyInWishlist) {
+    //     wishlistPostIds.remove(postId);
+    //   } else {
+    //     wishlistPostIds.add(postId);
+    //   }
+    // });
+
+    // try {
+    //   if (alreadyInWishlist) {
+    //     await Supabase.instance.client
+    //         .from('Wish_Lists')
+    //         .delete()
+    //         .eq('id', postId)
+    //         .eq('user_id', currentUser!.id);
+    //   } else {
+    //     await Supabase.instance.client.from('Wish_Lists').insert({
+    //       'id': postId,
+    //       'user_id': currentUser!.id,
+    //     });
+    //   }
+    // } catch (e) {
+    //   print('Error updating wishlist: $e');
+    // }
   }
 
   void _logout(BuildContext context) {
@@ -129,70 +144,61 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Homepage'),
-        automaticallyImplyLeading: false,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.person),
-            onPressed: () => _goToProfile(context),
-            tooltip: 'Profile Page',
-          ),
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () => _logout(context),
-            tooltip: 'Logout',
-          ),
-        ],
-      ),
-      floatingActionButton: FloatingActionButton(
-          onPressed: () => _goToCreatePost, child: const Icon(Icons.add)),
-      body: isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : Column(
-              children: [
-                const SizedBox(height: 10),
-                const Text('Welcome to the Homepage!'),
-                const SizedBox(height: 10),
-                Expanded(
-                  child: ListView.builder(
-                    itemCount: posts.length,
-                    itemBuilder: (context, index) {
-                      final post = posts[index];
-                      final postId = post['id'];
-                      final isWishlisted = wishlistPostIds.contains(postId);
-
-                      return ListTile(
-                        title: Text(post['title'] ?? 'No Title'),
-                        subtitle: Text(
-                            '${post['description']} | Price: ${post['price']} | Active: ${post['is_active'] ? 'YES' : 'NO'}'),
-                        trailing: post['user_id'] != currentUser!.id
-                            ? IconButton(
-                                icon: Icon(
-                                  isWishlisted
-                                      ? Icons.favorite
-                                      : Icons.favorite_border,
-                                  color:
-                                      isWishlisted ? Colors.red : Colors.grey,
-                                ),
-                                onPressed: () => toggleWishlist(postId),
-                              )
-                            : null,
-                      );
-                    },
-                  ),
-                ),
-                const SizedBox(height: 20),
-                ElevatedButton(
-                  onPressed: () => _goToDashboard(context),
-                  child: const Text('Back to Dashboard'),
-                ),
-                ElevatedButton(
-                  onPressed: () => _goToProfile(context),
-                  child: const Text('Go to profile'),
-                ),
-              ],
+        appBar: AppBar(
+          title: const Text('Homepage'),
+          automaticallyImplyLeading: false,
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.dashboard),
+              onPressed: () => _goToDashboard(context),
+              tooltip: 'Dashboard',
             ),
-    );
+            IconButton(
+              icon: const Icon(Icons.person),
+              onPressed: () => _goToProfile(context),
+              tooltip: 'Profile Page',
+            ),
+            IconButton(
+              icon: const Icon(Icons.logout),
+              onPressed: () => _logout(context),
+              tooltip: 'Logout',
+            ),
+          ],
+        ),
+        floatingActionButton: FloatingActionButton(
+            onPressed: () => _goToCreatePost, child: const Icon(Icons.add)),
+        body: StreamBuilder(
+            stream: db.allPosts,
+            builder: (context, snapshot) {
+              if (!snapshot.hasData) {
+                return const Center(child: CircularProgressIndicator());
+              }
+
+              final posts = snapshot.data;
+
+              return ListView.builder(
+                  itemCount: posts?.length,
+                  itemBuilder: (context, index) {
+                    final post = Post.fromMap(posts![index]);
+                    final isWishlisted = wishlistPostIds.contains(post.id);
+
+                    return ListTile(
+                      title: Text(post.title),
+                      subtitle: Text(
+                          '${post.description} | Price: ${post.price} | Active: ${post.isActive ? 'YES' : 'NO'}'),
+                      trailing: post.userId != currentUser!.id
+                          ? IconButton(
+                              icon: Icon(
+                                isWishlisted
+                                    ? Icons.favorite
+                                    : Icons.favorite_border,
+                                color: isWishlisted ? Colors.red : Colors.grey,
+                              ),
+                              onPressed: () => pickWishlist(post.id as int),
+                            )
+                          : null,
+                    );
+                  });
+            }));
   }
 }
