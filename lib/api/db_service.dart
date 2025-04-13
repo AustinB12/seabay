@@ -31,6 +31,12 @@ class DbService {
       .eq('user_id', currentUserId as String)
       .asStream();
 
+  final usersWishlists = Supabase.instance.client
+      .from('Wish_Lists')
+      .select('*')
+      .eq('user_id', currentUserId as String)
+      .asStream();
+
   final allPosts =
       Supabase.instance.client.from('Posts').select('*').asStream();
 
@@ -118,7 +124,8 @@ class DbService {
   Future<List<WishList>> getWishlists() async {
     final results = await _client
         .from('Wish_Lists')
-        .select('id, title, description, price, is_active')
+        .select('id, name, description, user_id')
+        .eq('user_id', currentUserId as String)
         .limit(50);
 
     if (results.isEmpty) return [];
@@ -130,7 +137,7 @@ class DbService {
   Future<WishList?> getWishlistById(String wishlistId) async {
     final results = await _client
         .from('Wish_Lists')
-        .select('id, title, description, price, is_active')
+        .select('id, name, description, user_id')
         .eq('id', wishlistId);
 
     if (results.isEmpty) return null;
