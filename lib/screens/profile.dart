@@ -50,26 +50,30 @@ class _ProfilePageState extends State<ProfilePage> {
                     controller: firstNameController,
                   ),
                   const Text('Last Name'),
-                  TextField(controller: lastNameController),
+                  TextField(
+                    controller: lastNameController,
+                  ),
                 ],
               ),
               actions: [
                 TextButton(
                     onPressed: () {
                       Navigator.pop(context);
-                      firstNameController.clear();
-                      lastNameController.clear();
                     },
                     child: const Text('Cancel')),
                 TextButton(
-                    onPressed: () async {
-                      Navigator.pop(context);
-                      db.updateUserProfile(SeabayUser(
-                        firstName: firstNameController.text,
-                        lastName: lastNameController.text,
-                      ));
-                    },
-                    child: const Text('Save')),
+                  onPressed: () async {
+                    Navigator.pop(context);
+                    await db.updateUserProfile(SeabayUser(
+                      firstName: firstNameController.text,
+                      lastName: lastNameController.text,
+                    ));
+                    setState(() {
+                      _profile = db.getCurrentUserProfile();
+                    });
+                  },
+                  child: const Text('Save'),
+                ),
               ],
             ));
   }
@@ -111,7 +115,11 @@ class _ProfilePageState extends State<ProfilePage> {
                 future: _profile,
                 builder: (builder, AsyncSnapshot<SeabayUser> snapshot) {
                   if (snapshot.connectionState == ConnectionState.done) {
+                    lastNameController.text = snapshot.data?.lastName as String;
+                    firstNameController.text =
+                        snapshot.data?.firstName as String;
                     return Column(
+                      spacing: 10,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         RichText(
@@ -120,14 +128,14 @@ class _ProfilePageState extends State<ProfilePage> {
                                 style: TextStyle(
                                     fontWeight: FontWeight.bold,
                                     color: Colors.white))),
-                        Text('${snapshot.data?.firstName}'),
+                        Text(firstNameController.text),
                         RichText(
                             text: TextSpan(
                                 text: 'Last Name:',
                                 style: TextStyle(
                                     fontWeight: FontWeight.bold,
                                     color: Colors.white))),
-                        Text('${snapshot.data?.lastName}'),
+                        Text(lastNameController.text),
                         RichText(
                             text: TextSpan(
                                 text: 'Email:',
@@ -142,38 +150,6 @@ class _ProfilePageState extends State<ProfilePage> {
                   }
                 }),
           ],
-        ))
-
-        // Center(
-        //   child: Column(
-        //     mainAxisAlignment: MainAxisAlignment.start,
-        //     children: [
-        //       const Text('Welcome to your profile!!'),
-        //       Text(usersEmail ?? 'Email not found'),
-        //       Builder(
-        //           builder: (BuildContext builder) =>
-        //               isEditing ? Text('Editing') : Text('Not editing')),
-        //       FutureBuilder<SeabayUser?>(
-        //           future: _profile,
-        //           builder: (BuildContext context,
-        //               AsyncSnapshot<SeabayUser?> snapshot) {
-        //             if (snapshot.connectionState == ConnectionState.done) {
-        //               return Text(
-        //                   '${snapshot.data?.firstName} ${snapshot.data?.lastName}');
-        //             } else {
-        //               return CircularProgressIndicator();
-        //             }
-        //           }),
-        //       Padding(
-        //         padding: EdgeInsets.all(40),
-        //         child: ElevatedButton(
-        //           onPressed: () => _goToHome(context),
-        //           child: const Text('Go to Home Page'),
-        //         ),
-        //       )
-        //     ],
-        //   ),
-        // ),
-        );
+        )));
   }
 }
