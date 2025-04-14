@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:developer';
 import 'package:seabay_app/api/db_service.dart';
 import 'package:seabay_app/auth/auth.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -41,7 +42,7 @@ class _HomePageState extends State<HomePage> {
         isLoading = false;
       });
     } catch (error) {
-      print('Error: $error');
+      log('Error: $error');
       setState(() {
         isLoading = false;
       });
