@@ -4,10 +4,10 @@ class PostsList extends StatefulWidget {
   const PostsList({Key? key}) : super(key: key);
 
   @override
-  _PostsListState createState() => _PostsListState();
+  PostsListState createState() => PostsListState();
 }
 
-class _PostsListState extends State<PostsList> {
+class PostsListState extends State<PostsList> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
