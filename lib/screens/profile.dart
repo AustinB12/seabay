@@ -183,6 +183,8 @@ class _ProfilePageState extends State<ProfilePage> {
         floatingActionButton: FloatingActionButton(
             onPressed: () => editProfile(), child: const Icon(Icons.edit)),
         body: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
             child: Column(
           mainAxisAlignment: MainAxisAlignment.start,
           mainAxisSize: MainAxisSize.max,
@@ -192,9 +194,8 @@ class _ProfilePageState extends State<ProfilePage> {
                 future: _profile,
                 builder: (builder, AsyncSnapshot<SeabayUser> snapshot) {
                   if (snapshot.connectionState == ConnectionState.done) {
-                    lastNameController.text = snapshot.data?.lastName as String;
-                    firstNameController.text =
-                        snapshot.data?.firstName as String;
+                    lastNameController.text = snapshot.data?.lastName ?? '';
+                    firstNameController.text = snapshot.data?.firstName ?? '';
                     return Column(
                       spacing: 10,
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -269,6 +270,8 @@ class _ProfilePageState extends State<ProfilePage> {
                 onPressed: () => addWishlist(),
                 child: const Text('Add Wishlist'))
           ],
-        )));
+        )
+      )
+    ));
   }
 }

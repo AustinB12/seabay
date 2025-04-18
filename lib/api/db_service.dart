@@ -198,8 +198,8 @@ class SeabayUser {
     return SeabayUser(
       id: map['id'] as int,
       authId: map['auth_id'] as String,
-      firstName: map['first_name'] as String,
-      lastName: map['last_name'] as String,
+      firstName: map['first_name'] ?? '',
+      lastName: map['last_name'] ?? '',
     );
   }
 
