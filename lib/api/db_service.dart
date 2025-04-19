@@ -36,19 +36,6 @@ class DbService {
   final allPosts =
       Supabase.instance.client.from('Posts').select('*').asStream();
 
-  final postIdsInWishlists =currentUserId!.isNotEmpty ?  Supabase.instance.client
-      .from('Posts_To_Wishlists')
-      .select('post_id, Wish_Lists(id, user_id)')
-      .eq('user_id', currentUserId ?? '')
-      .asStream() : null;
-
-  Future getPostIdsInWishlists() {
-    return _client
-        .from('Posts_To_Wishlists')
-        .select('post_id, Wish_Lists(id, user_id)')
-        .eq('user_id', currentUserId ?? '');
-  }
-
   //* Get Posts
   Future<List<Post>> getPosts() async {
     final results = await _client
