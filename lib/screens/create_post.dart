@@ -3,6 +3,8 @@ import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:seabay_app/api/db_service.dart';
+import 'package:seabay_app/api/types.dart';
+import 'package:seabay_app/auth/auth.dart';
 import 'homepage.dart';
 
 class CreatePostPage extends StatefulWidget {
@@ -20,6 +22,7 @@ class _CreatePostPageState extends State<CreatePostPage> {
   String successMessage = '';
 
   final db = DbService();
+  final auth = AuthService();
 
   Future<void> _createPost() async {
     final title = _titleController.text.trim();
@@ -38,7 +41,7 @@ class _CreatePostPageState extends State<CreatePostPage> {
       description: description,
       price: price,
       isActive: true, // Default value (active post)
-      userId: db.getCurrentUserId() as String,
+      userId: auth.getCurrentUserId() as String,
     );
 
     try {

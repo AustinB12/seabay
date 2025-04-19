@@ -18,7 +18,7 @@ class _LoginPageState extends State<LoginPage> {
   final authService = AuthService();
 
   void _goToCreateAccountPage(BuildContext context) {
-    Navigator.pushReplacement(
+    Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => const CreateAccountPage()),
     );

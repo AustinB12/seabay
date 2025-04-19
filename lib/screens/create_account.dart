@@ -35,7 +35,7 @@ class CreateAccountPageState extends State<CreateAccountPage> {
       });
     }
     if (newUserId != null) {
-      await db.createNewUserProfile(newUserId);
+      await authService.createNewUserProfile(newUserId);
       _goToHome();
     }
   }
@@ -68,10 +68,6 @@ class CreateAccountPageState extends State<CreateAccountPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Create New Account'),
-        actions: [
-          IconButton(
-              onPressed: _goToLoginPage, icon: const Icon(Icons.arrow_back))
-        ],
       ),
       body: Padding(
           padding: const EdgeInsets.all(20.0),

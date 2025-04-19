@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:seabay_app/api/db_service.dart';
+import 'package:seabay_app/api/types.dart';
 
 class PostDetails extends StatelessWidget {
   final Post post;

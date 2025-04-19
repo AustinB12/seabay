@@ -1,7 +1,11 @@
+import 'package:seabay_app/api/types.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class AuthService {
   final SupabaseClient _client = Supabase.instance.client;
+
+  static String? get currentUserId =>
+      Supabase.instance.client.auth.currentSession?.user.id;
 
   Future<AuthResponse> signInWithEmailPassword(
       String email, String password) async {
@@ -32,5 +36,31 @@ class AuthService {
     final session = _client.auth.currentSession;
     final user = session?.user;
     return user?.id;
+  }
+
+  final profileStream = Supabase.instance.client
+      .from('Posts')
+      .select('*')
+      .eq('user_id', currentUserId ?? '')
+      .asStream();
+
+  Future<SeabayUser> getCurrentUserProfile() async {
+    final results = await _client
+        .from('User_Profiles')
+        .select('id, first_name, last_name, auth_id')
+        .eq('auth_id', currentUserId ?? '');
+
+    return SeabayUser.fromMap(results.first);
+  }
+
+  Future createNewUserProfile(String authId) async {
+    await _client.from('User_Profiles').insert({'auth_id': authId});
+  }
+
+  Future updateUserProfile(SeabayUser user) async {
+    await _client
+        .from('User_Profiles')
+        .update({'first_name': user.firstName, 'last_name': user.lastName}).eq(
+            'auth_id', currentUserId ?? '');
   }
 }

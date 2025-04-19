@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:seabay_app/api/db_service.dart';
+import 'package:seabay_app/api/types.dart';
 import 'package:seabay_app/auth/auth.dart';
 import 'login.dart';
 import 'homepage.dart';
@@ -66,12 +67,12 @@ class _ProfilePageState extends State<ProfilePage> {
                 TextButton(
                   onPressed: () async {
                     Navigator.pop(context);
-                    await db.updateUserProfile(SeabayUser(
+                    await auth.updateUserProfile(SeabayUser(
                       firstName: firstNameController.text,
                       lastName: lastNameController.text,
                     ));
                     setState(() {
-                      _profile = db.getCurrentUserProfile();
+                      _profile = auth.getCurrentUserProfile();
                     });
                   },
                   child: const Text('Save'),
@@ -156,7 +157,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
   @override
   void initState() {
-    _profile = db.getCurrentUserProfile();
+    _profile = auth.getCurrentUserProfile();
     _wishlists = db.getWishlists();
     super.initState();
   }

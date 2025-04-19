@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:developer';
 import 'package:seabay_app/api/db_service.dart';
+import 'package:seabay_app/api/types.dart';
 import 'package:seabay_app/auth/auth.dart';
 import 'package:seabay_app/screens/post_details.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
