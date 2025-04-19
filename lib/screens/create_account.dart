@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:seabay_app/api/db_service.dart';
 import 'package:seabay_app/auth/auth.dart';
 import 'package:seabay_app/screens/homepage.dart';
 import 'package:seabay_app/screens/login.dart';
@@ -18,7 +17,6 @@ class CreateAccountPageState extends State<CreateAccountPage> {
   String errorMessage = '';
 
   final authService = AuthService();
-  final db = DbService();
 
   Future<void> _createNewAccount() async {
     final email = emailController.text.trim();

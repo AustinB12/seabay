@@ -38,12 +38,6 @@ class AuthService {
     return user?.id;
   }
 
-  final profileStream = Supabase.instance.client
-      .from('Posts')
-      .select('*')
-      .eq('user_id', currentUserId ?? '')
-      .asStream();
-
   Future<SeabayUser> getCurrentUserProfile() async {
     final results = await _client
         .from('User_Profiles')
