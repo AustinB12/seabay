@@ -1,3 +1,6 @@
+import 'dart:io';
+
+import 'package:image_picker/image_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:seabay_app/api/db_service.dart';
 import 'homepage.dart';
@@ -45,11 +48,9 @@ class _CreatePostPageState extends State<CreatePostPage> {
       //   errorMessage = '';
       //   successMessage = 'Post made successfully! ';
       // });
-      if (context.mounted){
+      if (context.mounted) {
         Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const HomePage())
-        );
+            context, MaterialPageRoute(builder: (context) => const HomePage()));
       }
     } catch (e) {
       setState(() {
@@ -64,6 +65,26 @@ class _CreatePostPageState extends State<CreatePostPage> {
       MaterialPageRoute(builder: (context) => const HomePage()),
     );
   }
+
+  //? IMAGES STUFF
+
+  File? imageFile;
+
+  //* Pick an image
+
+  Future pickImage() async {
+    final ImagePicker picker = ImagePicker();
+
+    final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+
+    if (image != null) {
+      setState(() {
+        imageFile = File(image.path);
+      });
+    }
+  }
+
+  //* Upload an image
 
   @override
   Widget build(BuildContext context) {

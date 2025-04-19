@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:developer';
 import 'package:seabay_app/api/db_service.dart';
 import 'package:seabay_app/auth/auth.dart';
+import 'package:seabay_app/screens/post_details.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'login.dart';
 import 'dashboard.dart';
@@ -140,25 +141,23 @@ class _HomePageState extends State<HomePage> {
 
   void _deletePost(int postId) {
     showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete Post'),
-        content: const Text('Are you sure you to delete this post?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () async {
-              Navigator.pop(context);
-              await db.deletePostById(postId);
-            },
-            child: const Text('Delete', style: TextStyle(color: Colors.red))
-          )
-        ]
-      )
-    );
+        context: context,
+        builder: (context) => AlertDialog(
+                title: const Text('Delete Post'),
+                content: const Text('Are you sure you to delete this post?'),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text('Cancel'),
+                  ),
+                  TextButton(
+                      onPressed: () async {
+                        Navigator.pop(context);
+                        await db.deletePostById(postId);
+                      },
+                      child: const Text('Delete',
+                          style: TextStyle(color: Colors.red)))
+                ]));
   }
 
   @override
@@ -186,7 +185,8 @@ class _HomePageState extends State<HomePage> {
           ],
         ),
         floatingActionButton: FloatingActionButton(
-            onPressed: () => _goToCreatePost(context), child: const Icon(Icons.add)),
+            onPressed: () => _goToCreatePost(context),
+            child: const Icon(Icons.add)),
         body: StreamBuilder(
             stream: db.allPosts,
             builder: (context, snapshot) {
@@ -206,37 +206,30 @@ class _HomePageState extends State<HomePage> {
                       title: Text(post.title),
                       subtitle: Text(
                           '${post.description} | Price: ${post.price} | Active: ${post.isActive ? 'YES' : 'NO'}'),
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          if (post.userId != currentUser!.id)
+                      trailing: Row(mainAxisSize: MainAxisSize.min, children: [
+                        if (post.userId != currentUser!.id)
                           IconButton(
                             icon: Icon(
                               isWishlisted
-                              ? Icons.favorite
-                              : Icons.favorite_border,
+                                  ? Icons.favorite
+                                  : Icons.favorite_border,
                               color: isWishlisted ? Colors.red : Colors.grey,
                             ),
                             onPressed: () => pickWishlist(post.id!),
                           ),
-                          if (post.userId == currentUser!.id)
+                        if (post.userId == currentUser!.id)
                           IconButton(
-                            icon: const Icon(Icons.delete, color: Colors.yellow),
+                            icon:
+                                const Icon(Icons.delete, color: Colors.yellow),
                             onPressed: () => _deletePost(post.id!),
                           ),
-                        ]
-                      )
-                      // trailing: post.userId != currentUser!.id
-                      //     ? IconButton(
-                      //         icon: Icon(
-                      //           isWishlisted
-                      //               ? Icons.favorite
-                      //               : Icons.favorite_border,
-                      //           color: isWishlisted ? Colors.red : Colors.grey,
-                      //         ),
-                      //         onPressed: () => pickWishlist(post.id as int),
-                      //       )
-                      //     : null,
+                      ]),
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => PostDetails(post: post),
+                        ),
+                      ),
                     );
                   });
             }));

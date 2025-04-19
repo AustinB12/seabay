@@ -95,7 +95,7 @@ class DbService {
   Future<Post?> getPostById(String postId) async {
     final results = await _client
         .from('Posts')
-        .select('id, title, description, price, is_active, user_id')
+        .select('id, title, description, price, is_active, user_id, images')
         .eq('id', postId);
 
     if (results.isEmpty) return null;
@@ -113,6 +113,7 @@ class DbService {
     });
   }
 
+//todo fix this
   //* Update Post
   Future<bool> updatePost(SeabayUser user) async {
     final results = await _client.from('Posts').update({
@@ -264,6 +265,7 @@ class Post {
   int? price = 0;
   bool isActive = false;
   String userId;
+  List<String>? imageUrls = [];
 
   Post(
       {required this.title,
@@ -271,16 +273,20 @@ class Post {
       this.description,
       this.price,
       required this.isActive,
-      required this.userId});
+      required this.userId,
+      this.imageUrls});
 
   factory Post.fromMap(Map<String, dynamic> map) {
     return Post(
-      id: map['id'] as int,
-      title: map['title'] as String,
-      description: map['description'] as String,
-      price: map['price'] as int,
-      isActive: map['is_active'] as bool,
-      userId: map['user_id'] as String,
+      id: map['id'] ?? 0,
+      title: map['title'] ?? '',
+      description: map['description'] ?? '',
+      price: map['price'] ?? 0,
+      isActive: map['is_active'] ?? true,
+      userId: map['user_id'] ?? '',
+      imageUrls: map['images'] != null
+          ? List<String>.from(map['images'].map((x) => x.toString()))
+          : [],
     );
   }
 
