@@ -40,10 +40,23 @@ class DbService {
   final allPosts =
       Supabase.instance.client.from('Posts').select('*').asStream();
 
+  final postIdsInWishlists = Supabase.instance.client
+      .from('Posts_To_Wishlists')
+      .select('post_id, Wish_Lists(id, user_id)')
+      .eq('user_id', currentUserId ?? '')
+      .asStream();
+
+  Future getPostIdsInWishlists() {
+    return _client
+        .from('Posts_To_Wishlists')
+        .select('post_id, Wish_Lists(id, user_id)')
+        .eq('user_id', currentUserId ?? '');
+  }
+
   final profileStream = Supabase.instance.client
       .from('Posts')
       .select('*')
-      .eq('user_id', currentUserId as String)
+      .eq('user_id', currentUserId ?? '')
       .asStream();
 
   Future<SeabayUser> getCurrentUserProfile() async {
