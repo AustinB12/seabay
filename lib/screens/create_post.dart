@@ -41,10 +41,16 @@ class _CreatePostPageState extends State<CreatePostPage> {
     try {
       await db.createPost(newPost);
       //Navigator.pop(context);
-      setState(() {
-        errorMessage = '';
-        successMessage = 'Post made successfully! ';
-      });
+      // setState(() {
+      //   errorMessage = '';
+      //   successMessage = 'Post made successfully! ';
+      // });
+      if (context.mounted){
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const HomePage())
+        );
+      }
     } catch (e) {
       setState(() {
         errorMessage = 'Failed to create post. $e';
@@ -92,10 +98,6 @@ class _CreatePostPageState extends State<CreatePostPage> {
                 errorMessage,
                 style: TextStyle(color: Colors.red),
               ),
-            ElevatedButton(
-              onPressed: goToHome,
-              child: const Text('Go to Home Page'),
-            ),
           ],
         ),
       ),

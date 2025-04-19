@@ -35,7 +35,7 @@ class CreateAccountPageState extends State<CreateAccountPage> {
       });
     }
     if (newUserId != null) {
-      db.createNewUserProfile(newUserId);
+      await db.createNewUserProfile(newUserId);
       _goToHome();
     }
   }
