@@ -20,7 +20,7 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   final currentUser = Supabase.instance.client.auth.currentUser;
   List<Post> posts = [];
-  List<int> wishlistPostIds = []; // 👈 Simple list of IDs
+  List<int> wishlistPostIds = []; 
   List<WishList> usersWishlists = [];
   bool isLoading = true;
 
@@ -33,81 +33,57 @@ class _HomePageState extends State<HomePage> {
     loadPostsAndWishlist();
   }
 
-  void loadPostsAndWishlist() async {
-    try {
-      List<WishList> wishlistData = await db.getWishlists();
-      List<Post> postsData = await db.getPosts();
+void loadPostsAndWishlist() async {
+  try {
+    final postsData = await db.getPosts();
 
-      setState(() {
-        posts = postsData;
-        usersWishlists = wishlistData;
-        isLoading = false;
-      });
-    } catch (error) {
-      log('Error: $error');
-      setState(() {
-        isLoading = false;
-      });
-    }
+    final wishlistResults = await Supabase.instance.client
+        .from('Wish_Lists')
+        .select('Post_Ids')
+        .eq('user_id', currentUser!.id)
+        .limit(1)
+        .maybeSingle();
+
+    final List<dynamic> rawPostIds = wishlistResults?['Post_Ids'] ?? [];
+    final List<int> ids = rawPostIds.cast<int>();
+
+    setState(() {
+      posts = postsData;
+      wishlistPostIds = ids;
+      isLoading = false;
+    });
+  } catch (error) {
+    log('Error: $error');
+    setState(() {
+      isLoading = false;
+    });
+  }
+}
+
+
+
+  
+void toggleWishlist(int postId, String postOwnerId) async {
+  if (postOwnerId == currentUser!.id) {
+    // Prevent adding own posts
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('You can’t wishlist your own post.')),
+    );
+    return;
   }
 
-  void pickWishlist(int postId) {
-    showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-              title: const Text('Choose a wishlist'),
-              content: ListView.builder(
-                  itemCount: usersWishlists.length,
-                  itemBuilder: (context, index) {
-                    final wl = usersWishlists[index];
+  final isWishlisted = wishlistPostIds.contains(postId);
 
-                    return ListTile(
-                      title: Text(wl.name),
-                      subtitle: Text(wl.description),
-                      onTap: () => toggleWishlist(postId, wl.id),
-                    );
-                  }),
-              actions: [
-                TextButton(
-                    onPressed: () {
-                      Navigator.pop(context);
-                    },
-                    child: const Text('Cancel')),
-              ],
-            ));
+  if (isWishlisted) {
+    await db.removePostIdFromWishlistJson(postId);
+  } else {
+    await db.addPostIdtoWishListJson(postId);
   }
 
-  void toggleWishlist(int postId, int wishlistId) async {
-    db.addPostToWishlist(postId, wishlistId);
+  loadPostsAndWishlist();
+}
 
-    // bool alreadyInWishlist = wishlistPostIds.contains(postId);
 
-    // // Update UI first
-    // setState(() {
-    //   if (alreadyInWishlist) {
-    //     wishlistPostIds.remove(postId);
-    //   } else {
-    //     wishlistPostIds.add(postId);
-    //   }
-    // });
-
-    // try {
-    //   if (alreadyInWishlist) {
-    //     await Supabase.instance.client
-    //         .from('Wish_Lists')
-    //         .delete()
-    //         .eq('id', postId)
-    //         .eq('user_id', currentUser!.id);
-    //   } else {
-    //     await Supabase.instance.client.from('Wish_Lists').insert({
-    //       'id': postId,
-    //       'user_id': currentUser!.id,
-    //     });
-    //   }
-    // } catch (e) {
-    //   print('Error updating wishlist: $e');
-    // }
-  }
 
   void _logout(BuildContext context) {
     auth.signOut();
@@ -216,7 +192,7 @@ class _HomePageState extends State<HomePage> {
                                   : Icons.favorite_border,
                               color: isWishlisted ? Colors.red : Colors.grey,
                             ),
-                            onPressed: () => pickWishlist(post.id!),
+                            onPressed: () => toggleWishlist(post.id!, post.userId),
                           ),
                         if (post.userId == currentUser!.id)
                           IconButton(
