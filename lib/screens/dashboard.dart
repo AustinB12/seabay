@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:seabay_app/auth/auth.dart';
+import 'package:seabay_app/screens/profile.dart';
 import 'login.dart';
 import 'homepage.dart';
 
@@ -21,6 +22,13 @@ class _DashboardPageState extends State<DashboardPage> {
         (route) => false);
   }
 
+    void _goToProfile(BuildContext context) {
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => const ProfilePage()),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     void goToHome() {
@@ -34,6 +42,11 @@ class _DashboardPageState extends State<DashboardPage> {
       appBar: AppBar(
         title: const Text('Dashboard'),
         actions: [
+          IconButton(
+              icon: const Icon(Icons.person),
+              onPressed: () => _goToProfile(context),
+              tooltip: 'Profile Page',
+            ),
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () => _logout(context),

@@ -99,6 +99,7 @@ class _CreatePostPageState extends State<CreatePostPage> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
+            ElevatedButton(onPressed: () => pickImage(), child: const Text('Upload Image')),
             TextField(
               controller: _titleController,
               decoration: const InputDecoration(labelText: 'Title'),

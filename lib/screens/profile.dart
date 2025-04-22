@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:seabay_app/api/db_service.dart';
 import 'package:seabay_app/api/types.dart';
 import 'package:seabay_app/auth/auth.dart';
+import 'package:seabay_app/components/profile_picture.dart';
 import 'login.dart';
 import 'homepage.dart';
 
@@ -183,45 +184,70 @@ class _ProfilePageState extends State<ProfilePage> {
         ),
         floatingActionButton: FloatingActionButton(
             onPressed: () => editProfile(), child: const Icon(Icons.edit)),
-        body: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-          mainAxisAlignment: MainAxisAlignment.start,
-          mainAxisSize: MainAxisSize.max,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
+        body: 
+        SingleChildScrollView(
+        child:
+        Padding(padding: EdgeInsets.all(16), child:
+        Column(
+              mainAxisAlignment: MainAxisAlignment.start,
+              mainAxisSize: MainAxisSize.max,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
             FutureBuilder<SeabayUser>(
                 future: _profile,
+                initialData: SeabayUser(
+                    firstName: 'Loading...',
+                    lastName: 'Loading...',
+                    profilePictureUrl: null),
                 builder: (builder, AsyncSnapshot<SeabayUser> snapshot) {
                   if (snapshot.connectionState == ConnectionState.done) {
                     lastNameController.text = snapshot.data?.lastName ?? '';
                     firstNameController.text = snapshot.data?.firstName ?? '';
                     return Column(
                       spacing: 10,
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
+                        ProfilePic(picUrl: snapshot.data?.profilePictureUrl ?? '', initials: '${snapshot.data?.firstName.substring(0, 1)}${snapshot.data?.lastName.substring(0, 1)}',),
+                        Padding(padding: EdgeInsets.all(16.0), child: 
+                        
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                        Column(crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
                         RichText(
+                          textAlign: TextAlign.left,
                             text: TextSpan(
                                 text: 'First Name:',
                                 style: TextStyle(
+                                
                                     fontWeight: FontWeight.bold,
                                     color: Colors.white))),
-                        Text(firstNameController.text),
+                        Text(firstNameController.text, textAlign: TextAlign.left,),
+                        ],),
+                        Column(crossAxisAlignment: CrossAxisAlignment.start,children: [
+
                         RichText(
+                          textAlign: TextAlign.left,
                             text: TextSpan(
                                 text: 'Last Name:',
                                 style: TextStyle(
                                     fontWeight: FontWeight.bold,
                                     color: Colors.white))),
                         Text(lastNameController.text),
+                        ],),
+                        Column(crossAxisAlignment: CrossAxisAlignment.start,children: [
                         RichText(
+                          textAlign: TextAlign.left,
                             text: TextSpan(
                                 text: 'Email:',
                                 style: TextStyle(
                                     fontWeight: FontWeight.bold,
                                     color: Colors.white))),
                         Text(usersEmail as String),
+                        ]),
+                          ],),
+                        ),
                       ],
                     );
                   } else {
@@ -271,8 +297,8 @@ class _ProfilePageState extends State<ProfilePage> {
                 onPressed: () => addWishlist(),
                 child: const Text('Add Wishlist'))
           ],
+        ))
         )
-      )
-    ));
+        );
   }
 }

@@ -4,15 +4,6 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 class DbService {
   final SupabaseClient _client = Supabase.instance.client;
 
-  Future<SeabayUser?> getUserProfile(String authId) async {
-    final results = await _client
-        .from('User_Profiles')
-        .select('id, first_name, last_name, auth_id')
-        .eq('auth_id', authId);
-
-    return SeabayUser.fromMap(results.first);
-  }
-
   String? userId;
 
   DbService() : userId = null;

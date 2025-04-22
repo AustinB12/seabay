@@ -41,7 +41,7 @@ class AuthService {
   Future<SeabayUser> getCurrentUserProfile() async {
     final results = await _client
         .from('User_Profiles')
-        .select('id, first_name, last_name, auth_id')
+        .select('id, first_name, last_name, auth_id, profile_pic')
         .eq('auth_id', currentUserId ?? '');
 
     return SeabayUser.fromMap(results.first);
