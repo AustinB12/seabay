@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:seabay_app/auth/auth.dart';
 import 'package:seabay_app/screens/homepage.dart';
 import 'package:seabay_app/screens/login.dart';
+import 'package:seabay_app/api/db_service.dart';
 
 class CreateAccountPage extends StatefulWidget {
   const CreateAccountPage({super.key});
@@ -34,6 +35,7 @@ class CreateAccountPageState extends State<CreateAccountPage> {
     }
     if (newUserId != null) {
       await authService.createNewUserProfile(newUserId);
+      await DbService().createDefaultWishlist(newUserId);
       _goToHome();
     }
   }

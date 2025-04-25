@@ -16,70 +16,172 @@ class ProfilePage extends StatefulWidget {
 class _ProfilePageState extends State<ProfilePage> {
   final db = DbService();
   final auth = AuthService();
-  bool isEditing = false;
   late Future<SeabayUser> _profile;
   late Future<List<WishList>> _wishlists;
+  late Future<List<Post>> _wishlistPosts;
+  late Future<List<Post>> _userPosts;
 
   final firstNameController = TextEditingController();
   final lastNameController = TextEditingController();
   final wlNameController = TextEditingController();
   final wlDescController = TextEditingController();
 
+  @override
+  void initState() {
+    _profile = auth.getCurrentUserProfile();
+    _wishlistPosts = db.loadWishlistedPosts();
+    _userPosts = db.getPostsByUser();
+    _wishlists = db.getWishlists();
+    super.initState();
+  }
+
   void _logout(BuildContext context) {
     auth.signOut();
     Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(builder: (context) => const LoginPage()),
-        (route) => false);
+      context,
+      MaterialPageRoute(builder: (context) => const LoginPage()),
+      (route) => false,
+    );
   }
 
   void _goToHome(BuildContext context) {
-    Navigator.push(
+    Navigator.pushReplacement(
       context,
       MaterialPageRoute(builder: (context) => const HomePage()),
     );
   }
 
-  void editProfile() {
+  Future<void> _refreshUserPosts() async {
+  setState(() {
+    _userPosts = db.getPostsByUser();
+  });
+}
+
+
+  void _editPostDialog(Post post) {
+  final titleController = TextEditingController(text: post.title);
+  final descController = TextEditingController(text: post.description);
+  final priceController = TextEditingController(text: post.price?.toString());
+
+  showDialog(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: const Text('Edit Post'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          TextField(
+            controller: titleController,
+            decoration: const InputDecoration(labelText: 'Title'),
+          ),
+          TextField(
+            controller: descController,
+            decoration: const InputDecoration(labelText: 'Description'),
+          ),
+          TextField(
+            controller: priceController,
+            decoration: const InputDecoration(labelText: 'Price'),
+            keyboardType: TextInputType.number,
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancel'),
+        ),
+        ElevatedButton(
+          onPressed: () async {
+            final updatedPost = Post(
+              id: post.id,
+              title: titleController.text,
+              description: descController.text,
+              price: int.tryParse(priceController.text) ?? 0,
+              isActive: post.isActive,
+              userId: post.userId,
+              imageUrls: post.imageUrls,
+            );
+
+            await db.updatePost(updatedPost);
+            await _refreshUserPosts();
+            Navigator.pop(context);
+            setState(() {
+              _wishlistPosts = db.loadWishlistedPosts();
+              _userPosts = db.getPostsByUser(); // if you're using this section too
+            });
+          },
+          child: const Text('Save'),
+        ),
+      ],
+    ),
+  );
+}
+
+
+  void _editProfileDialog() {
     showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-              title: const Text('Edit Profile'),
-              content: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Text('First Name'),
-                  TextField(
-                    controller: firstNameController,
-                  ),
-                  const Text('Last Name'),
-                  TextField(
-                    controller: lastNameController,
-                  ),
-                ],
-              ),
-              actions: [
-                TextButton(
-                    onPressed: () {
-                      Navigator.pop(context);
-                    },
-                    child: const Text('Cancel')),
-                TextButton(
-                  onPressed: () async {
-                    Navigator.pop(context);
-                    await auth.updateUserProfile(SeabayUser(
-                      firstName: firstNameController.text,
-                      lastName: lastNameController.text,
-                    ));
-                    setState(() {
-                      _profile = auth.getCurrentUserProfile();
-                    });
-                  },
-                  child: const Text('Save'),
-                ),
-              ],
-            ));
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Edit Profile'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: firstNameController,
+              decoration: const InputDecoration(labelText: 'First Name'),
+            ),
+            TextField(
+              controller: lastNameController,
+              decoration: const InputDecoration(labelText: 'Last Name'),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+          ElevatedButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              await auth.updateUserProfile(SeabayUser(
+                firstName: firstNameController.text,
+                lastName: lastNameController.text,
+              ));
+              setState(() {
+                _profile = auth.getCurrentUserProfile();
+              });
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showPostDetails(Post post) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(post.title),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (post.description != null)
+              Text(post.description!, style: const TextStyle(color: Colors.black87)),
+            const SizedBox(height: 10),
+            Text('Price: \$${post.price}', style: const TextStyle(fontWeight: FontWeight.bold)),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Close')),
+        ],
+      ),
+    );
+  }
+
+  void _removeFromWishlist(int postId) async {
+    await db.removePostIdFromWishlistJson(postId);
+    setState(() {
+      _wishlistPosts = db.loadWishlistedPosts();
+    });
   }
 
   void deleteWishlistConfirmation(WishList wl) {
@@ -113,6 +215,7 @@ class _ProfilePageState extends State<ProfilePage> {
   Future<void> deleteWishlist(int id) async {
     await db.deleteWishlistById(id);
   }
+
 
   void addWishlist() {
     showDialog(
@@ -157,35 +260,31 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   @override
-  void initState() {
-    _profile = auth.getCurrentUserProfile();
-    _wishlists = db.getWishlists();
-    super.initState();
-  }
-
-  @override
   Widget build(BuildContext context) {
     final usersEmail = auth.getCurrentUserEmail();
 
     return Scaffold(
-        appBar: AppBar(
-          title: const Text('User Profile'),
-          actions: [
-            IconButton(
-                onPressed: () => _goToHome(context),
-                icon: const Icon(Icons.home),
-                tooltip: 'Go to homepage'),
-            IconButton(
-              icon: const Icon(Icons.logout),
-              onPressed: () => _logout(context),
-              tooltip: 'Logout',
-            ),
-          ],
-        ),
-        floatingActionButton: FloatingActionButton(
-            onPressed: () => editProfile(), child: const Icon(Icons.edit)),
-        body: 
-        SingleChildScrollView(
+      appBar: AppBar(
+        title: const Text('User Profile'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.home),
+            onPressed: () => _goToHome(context),
+            tooltip: 'Go to Home',
+          ),
+          IconButton(
+            icon: const Icon(Icons.logout),
+            onPressed: () => _logout(context),
+            tooltip: 'Logout',
+          ),
+        ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _editProfileDialog,
+        child: const Icon(Icons.edit),
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
         child:
         Padding(padding: EdgeInsets.all(16), child:
         Column(

@@ -68,14 +68,15 @@ class Post {
   String userId;
   List<String>? imageUrls = [];
 
-  Post(
-      {required this.title,
-      this.id,
-      this.description,
-      this.price,
-      required this.isActive,
-      required this.userId,
-      this.imageUrls});
+  Post({
+    required this.title,
+    this.id,
+    this.description,
+    this.price,
+    required this.isActive,
+    required this.userId,
+    this.imageUrls,
+  });
 
   factory Post.fromMap(Map<String, dynamic> map) {
     return Post(
@@ -101,4 +102,25 @@ class Post {
       'userId': userId,
     };
   }
+
+  Post copyWith({
+    int? id,
+    String? title,
+    String? description,
+    int? price,
+    bool? isActive,
+    String? userId,
+    List<String>? imageUrls,
+  }) {
+    return Post(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      description: description ?? this.description,
+      price: price ?? this.price,
+      isActive: isActive ?? this.isActive,
+      userId: userId ?? this.userId,
+      imageUrls: imageUrls ?? this.imageUrls,
+    );
+  }
 }
+
