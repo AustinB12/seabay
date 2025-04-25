@@ -102,7 +102,7 @@ class _ProfilePageState extends State<ProfilePage> {
             Navigator.pop(context);
             setState(() {
               _wishlistPosts = db.loadWishlistedPosts();
-              _userPosts = db.getPostsByUser(); // if you're using this section too
+              _userPosts = db.getPostsByUser();
             });
           },
           child: const Text('Save'),
@@ -112,44 +112,81 @@ class _ProfilePageState extends State<ProfilePage> {
   );
 }
 
+void _editProfileDialog() {
+  String? errorMessage;
 
-  void _editProfileDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Edit Profile'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: firstNameController,
-              decoration: const InputDecoration(labelText: 'First Name'),
+  showDialog(
+    context: context,
+    builder: (context) {
+      return StatefulBuilder(
+        builder: (context, setStateDialog) {
+          return AlertDialog(
+            title: const Text('Edit Profile'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: firstNameController,
+                  decoration: const InputDecoration(labelText: 'First Name'),
+                ),
+                TextField(
+                  controller: lastNameController,
+                  decoration: const InputDecoration(labelText: 'Last Name'),
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(top: 10),
+                  child: Text(
+                    errorMessage ?? '',
+                    style: const TextStyle(color: Colors.red),
+                  ),
+                ),
+              ],
             ),
-            TextField(
-              controller: lastNameController,
-              decoration: const InputDecoration(labelText: 'Last Name'),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
-          ElevatedButton(
-            onPressed: () async {
-              Navigator.pop(context);
-              await auth.updateUserProfile(SeabayUser(
-                firstName: firstNameController.text,
-                lastName: lastNameController.text,
-              ));
-              setState(() {
-                _profile = auth.getCurrentUserProfile();
-              });
-            },
-            child: const Text('Save'),
-          ),
-        ],
-      ),
-    );
-  }
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancel'),
+              ),
+              ElevatedButton(
+                onPressed: () async {
+                  final firstName = firstNameController.text.trim();
+                  final lastName = lastNameController.text.trim();
+                  final regName = RegExp(r'^[a-zA-Z]+$');
+
+                  if (firstName.isEmpty || lastName.isEmpty) {
+                    setStateDialog(() {
+                      errorMessage = 'First and Last Name cannot be empty.';
+                    });
+                    return;
+                  }
+
+                  if (!regName.hasMatch(firstName) || !regName.hasMatch(lastName)) {
+                    setStateDialog(() {
+                      errorMessage = 'Names can only include letters';
+                    });
+                    return;
+                  }
+
+                  Navigator.pop(context);
+                  await auth.updateUserProfile(SeabayUser(
+                    firstName: firstNameController.text,
+                    lastName: lastNameController.text,
+                  ));
+
+                  setState(() {
+                    _profile = auth.getCurrentUserProfile();
+                  });
+                },
+                child: const Text('Save'),
+              ),
+            ],
+          );
+        },
+      );
+    },
+  );
+}
+
 
   void _showPostDetails(Post post) {
     showDialog(

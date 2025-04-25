@@ -15,6 +15,8 @@ class CreateAccountPageState extends State<CreateAccountPage> {
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
   final confirmPasswordController = TextEditingController();
+  final firstNameController = TextEditingController();
+  final lastNameController = TextEditingController();
   String errorMessage = '';
 
   final authService = AuthService();
@@ -34,7 +36,11 @@ class CreateAccountPageState extends State<CreateAccountPage> {
       });
     }
     if (newUserId != null) {
-      await authService.createNewUserProfile(newUserId);
+      await authService.createNewUserProfile(
+        authId: newUserId,
+        firstName: firstNameController.text.trim(),
+        lastName: lastNameController.text.trim(),
+      );
       await DbService().createDefaultWishlist(newUserId);
       _goToHome();
     }
@@ -75,6 +81,18 @@ class CreateAccountPageState extends State<CreateAccountPage> {
             autovalidateMode: AutovalidateMode.onUnfocus,
             child: Column(
               children: [
+                TextFormField(
+                  controller: firstNameController,
+                  decoration: const InputDecoration(labelText: 'First Name'),
+                  validator: (value) =>
+                      value == null || value.isEmpty ? 'Enter First Name' : null,
+                ),
+                TextFormField(
+                  controller: lastNameController,
+                  decoration: const InputDecoration(labelText: 'Last Name'),
+                  validator: (value) =>
+                      value == null || value.isEmpty ? 'Enter Last Name': null,
+                ),
                 TextFormField(
                   controller: emailController,
                   decoration: const InputDecoration(labelText: 'Email'),
