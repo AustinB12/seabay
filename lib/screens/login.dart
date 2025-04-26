@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:seabay_app/auth/auth.dart';
 import 'package:seabay_app/screens/create_account.dart';
-import 'package:seabay_app/screens/dashboard.dart';
+//import 'package:seabay_app/screens/dashboard.dart';
+import 'homepage.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -41,7 +42,7 @@ class _LoginPageState extends State<LoginPage> {
 
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => const DashboardPage()),
+        MaterialPageRoute(builder: (context) => const HomePage()),
       );
     } catch (e) {
       setState(() {
