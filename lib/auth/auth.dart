@@ -47,8 +47,16 @@ class AuthService {
     return SeabayUser.fromMap(results.first);
   }
 
-  Future createNewUserProfile(String authId) async {
-    await _client.from('User_Profiles').insert({'auth_id': authId});
+  Future<void> createNewUserProfile({
+    required String authId,
+    required String firstName,
+    required String lastName,
+  }) async {
+    await _client.from('User_Profiles').insert({
+      'auth_id': authId,
+      'first_name': firstName,
+      'last_name': lastName,
+    });
   }
 
   Future updateUserProfile(SeabayUser user) async {
