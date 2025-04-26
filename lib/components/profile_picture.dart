@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
@@ -12,9 +11,6 @@ class ProfilePic extends StatelessWidget {
     required this.initials,
   });
 
-    
-
-  
   @override
   Widget build(BuildContext context) {
     return SizedBox(
@@ -26,7 +22,13 @@ class ProfilePic extends StatelessWidget {
         children: [
           CircleAvatar(
             backgroundImage: picUrl.isNotEmpty ? NetworkImage(picUrl) : null,
-            child: picUrl.isEmpty ? Expanded( child: Text(initials.toUpperCase(), style: TextStyle(fontSize: 36), )) : null,
+            child: picUrl.isEmpty
+                ? Expanded(
+                    child: Text(
+                    initials.toUpperCase(),
+                    style: TextStyle(fontSize: 36),
+                  ))
+                : null,
           ),
           Positioned(
             right: -16,
