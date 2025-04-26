@@ -30,35 +30,30 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
-    loadPostsAndWishlist();
+    // loadPostsAndWishlist();
   }
 
-void loadPostsAndWishlist() async {
-  try {
-    final postsData = await db.getPosts();
+// void loadPostsAndWishlist() async {
+//   try {
+//     final postsData = await db.getPosts();
 
-    final wishlistResults = await Supabase.instance.client
-        .from('Wish_Lists')
-        .select('Post_Ids')
-        .eq('user_id', currentUser!.id)
-        .limit(1)
-        .maybeSingle();
+//     final wishlistResults = await db.getWishlists();
 
-    final List<dynamic> rawPostIds = wishlistResults?['Post_Ids'] ?? [];
-    final List<int> ids = rawPostIds.cast<int>();
+//     final List<dynamic> rawPostIds = wishlistResults?['Post_Ids'] ?? [];
+//     final List<int> ids = rawPostIds.cast<int>();
 
-    setState(() {
-      posts = postsData;
-      wishlistPostIds = ids;
-      isLoading = false;
-    });
-  } catch (error) {
-    log('Error: $error');
-    setState(() {
-      isLoading = false;
-    });
-  }
-}
+//     setState(() {
+//       posts = postsData;
+//       wishlistPostIds = ids;
+//       isLoading = false;
+//     });
+//   } catch (error) {
+//     log('Error: $error');
+//     setState(() {
+//       isLoading = false;
+//     });
+//   }
+// }
 
 
 
@@ -79,7 +74,7 @@ void toggleWishlist(int postId, String postOwnerId) async {
     await db.addPostIdtoWishListJson(postId);
   }
 
-  loadPostsAndWishlist();
+  // loadPostsAndWishlist();
 }
 
 
@@ -198,7 +193,9 @@ void toggleWishlist(int postId, String postOwnerId) async {
 
   @override
   Widget build(BuildContext context) {
+
     return Scaffold(
+      
         appBar: AppBar(
           title: const Text('Homepage'),
           automaticallyImplyLeading: false,
