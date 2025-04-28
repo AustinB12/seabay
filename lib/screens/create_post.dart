@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:seabay_app/api/db_service.dart';
+import 'package:seabay_app/api/storage_service.dart';
 import 'package:seabay_app/api/types.dart';
 import 'package:seabay_app/auth/auth.dart';
 import 'homepage.dart';
@@ -21,6 +22,7 @@ class _CreatePostPageState extends State<CreatePostPage> {
   String successMessage = '';
 
   final db = DbService();
+  final storage = StorageService();
   final auth = AuthService();
 
   Future<void> _createPost() async {
@@ -88,6 +90,7 @@ class _CreatePostPageState extends State<CreatePostPage> {
   //? IMAGES STUFF
 
   File? imageFile;
+  String? postImgUrl = '';
 
   //* Pick an image
 
@@ -96,11 +99,29 @@ class _CreatePostPageState extends State<CreatePostPage> {
 
     final XFile? image = await picker.pickImage(source: ImageSource.gallery);
 
-    if (image != null) {
-      setState(() {
-        imageFile = File(image.path);
-      });
+    if (image == null) {
+      return;
     }
+    setState(() {
+      imageFile = File(image.path);
+      // imagePath = image.path;
+    });
+
+    final imageExtension = image.path.split('.').last.toLowerCase();
+    final imageBytes = await image.readAsBytes();
+    final userId = auth.getCurrentUserId();
+    final imagePath =
+        '/$userId/${DateTime.now().millisecondsSinceEpoch.toString()}';
+
+    await storage.uploadPostPicBucket(imagePath, imageBytes, imageExtension);
+
+    String imageUrl = await storage.getPostImageUrl(imagePath);
+
+    setState(() {
+      postImgUrl = imageUrl;
+    });
+
+    // onUpload(imageUrl);
   }
 
   //* Upload an image
@@ -115,7 +136,9 @@ class _CreatePostPageState extends State<CreatePostPage> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            ElevatedButton(onPressed: () => pickImage(), child: const Text('Upload Image')),
+            ElevatedButton(
+                onPressed: () => pickImage(),
+                child: const Text('Upload Image')),
             TextField(
               controller: _titleController,
               decoration: const InputDecoration(labelText: 'Title'),
@@ -134,6 +157,7 @@ class _CreatePostPageState extends State<CreatePostPage> {
               onPressed: _createPost,
               child: const Text('Create Post'),
             ),
+            if (postImgUrl!.isNotEmpty) Image.network(postImgUrl!),
             if (errorMessage.isNotEmpty)
               Text(
                 errorMessage,
