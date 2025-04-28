@@ -25,7 +25,7 @@ class DbService {
       .asStream() : null;
 
   final allPosts =
-      Supabase.instance.client.from('Posts').select('*').asStream();
+      Supabase.instance.client.from('Posts').select('*').order('created_at', ascending: false).asStream();
 
   //* Get Posts
   Future<List<Post>> getPosts() async {

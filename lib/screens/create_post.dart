@@ -26,14 +26,25 @@ class _CreatePostPageState extends State<CreatePostPage> {
   Future<void> _createPost() async {
     final title = _titleController.text.trim();
     final description = _descriptionController.text.trim();
-    final price = (double.tryParse(_priceController.text) ?? 0.0).toInt();
-
-    if (title.isEmpty || description.isEmpty || price == 0) {
+    final inputPrice = _priceController.text.trim();
+    final priceParsed = double.tryParse(inputPrice);
+     
+    // final price = (double.tryParse(_priceController.text) ?? 0.0).toInt();
+    if (title.isEmpty || description.isEmpty || inputPrice == 0) {
       setState(() {
         errorMessage = 'Please fill in all fields.';
       });
       return;
     }
+
+    if(priceParsed == null){
+      setState(() {
+        errorMessage = 'Price must be a number.';
+        successMessage = '';
+      });
+      return;
+    }
+    final price = priceParsed.toInt();
 
     final newPost = Post(
       title: title,
@@ -45,11 +56,16 @@ class _CreatePostPageState extends State<CreatePostPage> {
 
     try {
       await db.createPost(newPost);
-      //Navigator.pop(context);
-      // setState(() {
-      //   errorMessage = '';
-      //   successMessage = 'Post made successfully! ';
-      // });
+      Navigator.pop(context);
+      setState(() {
+        errorMessage = '';
+        successMessage = 'Post created successfully!';
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(successMessage)),
+      );
+
       if (context.mounted) {
         Navigator.pushReplacement(
             context, MaterialPageRoute(builder: (context) => const HomePage()));
@@ -57,6 +73,7 @@ class _CreatePostPageState extends State<CreatePostPage> {
     } catch (e) {
       setState(() {
         errorMessage = 'Failed to create post. $e';
+        successMessage = '';
       });
     }
   }
@@ -120,7 +137,7 @@ class _CreatePostPageState extends State<CreatePostPage> {
             if (errorMessage.isNotEmpty)
               Text(
                 errorMessage,
-                style: TextStyle(color: Colors.red),
+                style: const TextStyle(color: Colors.red),
               ),
           ],
         ),

@@ -54,9 +54,6 @@ class _HomePageState extends State<HomePage> {
 //     });
 //   }
 // }
-
-
-
   
 void toggleWishlist(int postId, String postOwnerId) async {
   if (postOwnerId == currentUser!.id) {
@@ -125,6 +122,9 @@ void toggleWishlist(int postId, String postOwnerId) async {
                       onPressed: () async {
                         Navigator.pop(context);
                         await db.deletePostById(postId);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Post deleted successfully!')),
+                        );
                       },
                       child: const Text('Delete',
                           style: TextStyle(color: Colors.red)))
@@ -223,8 +223,8 @@ void toggleWishlist(int postId, String postOwnerId) async {
               if (!snapshot.hasData) {
                 return const Center(child: CircularProgressIndicator());
               }
-
-              final posts = snapshot.data?.reversed.toList();
+    
+              final posts = snapshot.data;
 
               return ListView.builder(
                   itemCount: posts?.length,

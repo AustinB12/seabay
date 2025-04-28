@@ -46,7 +46,8 @@ class _LoginPageState extends State<LoginPage> {
       );
     } catch (e) {
       setState(() {
-        errorMessage = 'Login failed. Please try again. ${e.toString()}';
+        //errorMessage = 'Login failed. Please try again. ${e.toString()}';
+        errorMessage = 'Login failed. Please try again.';
       });
     }
   }
@@ -71,14 +72,14 @@ class _LoginPageState extends State<LoginPage> {
                   _login();
                 }),
             const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: _login,
-              child: const Text('Login'),
-            ),
             if (errorMessage.isNotEmpty) ...[
               const SizedBox(height: 10),
               Text(errorMessage, style: const TextStyle(color: Colors.red)),
             ],
+            ElevatedButton(
+              onPressed: _login,
+              child: const Text('Login'),
+            ),
             ElevatedButton(
               onPressed: () => _goToCreateAccountPage(context),
               child: const Text('Sign Up'),
