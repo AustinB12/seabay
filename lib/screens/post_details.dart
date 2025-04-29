@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:seabay_app/api/types.dart';
+import 'package:seabay_app/api/posts.dart';
 
 class PostDetails extends StatelessWidget {
   final Post post;

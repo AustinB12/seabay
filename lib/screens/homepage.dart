@@ -1,10 +1,8 @@
-import 'package:seabay_app/api/posts.dart';
-
 import 'login.dart';
 import 'profile.dart';
 import 'create_post.dart';
 import 'package:flutter/material.dart';
-import 'package:seabay_app/api/types.dart';
+import 'package:seabay_app/api/posts.dart';
 import 'package:seabay_app/auth/auth.dart';
 import 'package:seabay_app/api/db_service.dart';
 import 'package:seabay_app/screens/post_details.dart';
