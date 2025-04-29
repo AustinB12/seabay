@@ -44,6 +44,47 @@ class _HomePageState extends State<HomePage> {
     // }
   }
 
+// void loadPostsAndWishlist() async {
+//   try {
+//     final postsData = await db.getPosts();
+
+//     final wishlistResults = await db.getWishlists();
+
+//     final List<dynamic> rawPostIds = wishlistResults?['Post_Ids'] ?? [];
+//     final List<int> ids = rawPostIds.cast<int>();
+
+//     setState(() {
+//       posts = postsData;
+//       wishlistPostIds = ids;
+//       isLoading = false;
+//     });
+//   } catch (error) {
+//     log('Error: $error');
+//     setState(() {
+//       isLoading = false;
+//     });
+//   }
+// }
+
+  void toggleWishlist(int postId, String postOwnerId) async {
+    if (postOwnerId == currentUser!.id) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('You can’t wishlist your own post.')),
+      );
+      return;
+    }
+
+    final isWishlisted = wishlistPostIds.contains(postId);
+
+    if (isWishlisted) {
+      await db.removePostIdFromWishlistJson(postId);
+    } else {
+      await db.addPostIdtoWishListJson(postId);
+    }
+
+    // loadPostsAndWishlist();
+  }
+
   void _logout(BuildContext context) {
     auth.signOut();
 
@@ -84,6 +125,10 @@ class _HomePageState extends State<HomePage> {
                         db.deletePostById(postId);
 
                         Navigator.pop(context);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                              content: Text('Post deleted successfully!')),
+                        );
                       },
                       child: const Text('Delete',
                           style: TextStyle(color: Colors.red)))

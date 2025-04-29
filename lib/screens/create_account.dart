@@ -31,8 +31,10 @@ class CreateAccountPageState extends State<CreateAccountPage> {
       newUserId = await authService.signUpWithEmailPassword(email, password);
     } catch (e) {
       setState(() {
+        // errorMessage =
+        //     'Account creation failed. Please try again. ${e.toString()}';
         errorMessage =
-            'Account creation failed. Please try again. ${e.toString()}';
+            'Account creation failed. Please try again.';
       });
     }
     if (newUserId != null) {
@@ -51,7 +53,18 @@ class CreateAccountPageState extends State<CreateAccountPage> {
             r"^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+")
         .hasMatch(value ?? '');
 
-    return emailValid ? null : "Email address is not valid";
+    return emailValid ? null : "Email address is not valid.";
+  }
+
+  String? validateName(String? value){
+    if (value == null || value.isEmpty){
+      return 'Fill in first or last name.';
+    }
+    final reg = RegExp(r'^[a-zA-Z]+$');
+    if (!reg.hasMatch(value)){
+      return 'Names can only include letters.';
+    }
+    return null;
   }
 
   void _goToHome() {
@@ -84,14 +97,12 @@ class CreateAccountPageState extends State<CreateAccountPage> {
                 TextFormField(
                   controller: firstNameController,
                   decoration: const InputDecoration(labelText: 'First Name'),
-                  validator: (value) =>
-                      value == null || value.isEmpty ? 'Enter First Name' : null,
+                  validator: (value) => validateName(value),
                 ),
                 TextFormField(
                   controller: lastNameController,
                   decoration: const InputDecoration(labelText: 'Last Name'),
-                  validator: (value) =>
-                      value == null || value.isEmpty ? 'Enter Last Name': null,
+                  validator: (value) => validateName(value),
                 ),
                 TextFormField(
                   controller: emailController,
