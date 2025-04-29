@@ -62,10 +62,12 @@ class _ProfilePageState extends State<ProfilePage> {
   final titleController = TextEditingController(text: post.title);
   final descController = TextEditingController(text: post.description);
   final priceController = TextEditingController(text: post.price?.toString());
+  String? errorMessage;
 
   showDialog(
     context: context,
-    builder: (context) => AlertDialog(
+    builder: (context) => StatefulBuilder(
+    builder: (context, setState) => AlertDialog(
       title: const Text('Edit Post'),
       content: Column(
         mainAxisSize: MainAxisSize.min,
@@ -83,6 +85,14 @@ class _ProfilePageState extends State<ProfilePage> {
             decoration: const InputDecoration(labelText: 'Price'),
             keyboardType: TextInputType.number,
           ),
+          if (errorMessage != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: Text(
+              errorMessage!,
+              style: const TextStyle(color: Colors.red),
+            )
+          )
         ],
       ),
       actions: [
@@ -92,6 +102,25 @@ class _ProfilePageState extends State<ProfilePage> {
         ),
         ElevatedButton(
           onPressed: () async {
+            final title = titleController.text.trim();
+            final description = descController.text.trim();
+            final price = priceController.text.trim();
+
+            if(title.isEmpty || description.isEmpty || price.isEmpty){
+              setState(() {
+                errorMessage = 'All fields are required.';
+              });
+              return;
+            }
+
+            final priceValue = int.tryParse(price);
+            if (priceValue == null || priceValue <= 0){
+              setState(() {
+                errorMessage = 'Price cannot include letters.';
+              });
+              return;
+            }
+
             final updatedPost = Post(
               id: post.id,
               title: titleController.text,
@@ -105,6 +134,10 @@ class _ProfilePageState extends State<ProfilePage> {
             await db.updatePost(updatedPost);
             await _refreshUserPosts();
             Navigator.pop(context);
+
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Post updated successfully.')),
+            );
             setState(() {
               _wishlistPosts = db.loadWishlistedPosts();
               _userPosts = db.getPostsByUser();
@@ -113,6 +146,7 @@ class _ProfilePageState extends State<ProfilePage> {
           child: const Text('Save'),
         ),
       ],
+    )
     ),
   );
 }
@@ -501,3 +535,4 @@ Widget build(BuildContext context) {
 }
 
 }
+

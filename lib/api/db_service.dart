@@ -153,15 +153,35 @@ class DbService {
 //todo fix this
   //* Update Post
   Future<bool> updatePost(Post post) async {
-    final results = await _client.from('Posts').update({
-      'title': post.title,
-      'description': post.description,
-      'is_active': post.isActive,
-      'price': post.price,
-      'images': post.imageUrls ?? [],
-    }).eq('id', post.id ?? 0);
+  final title = post.title;
+  final description = post.description;
+  final price = post.price;
 
-    return results.isEmpty;
+  if (title == null || title.isEmpty) {
+    return false;
+  }
+
+  if (description == null || description.isEmpty) {
+    return false;
+  }
+
+  if (price == null || price <= 0) {
+    return false;
+  }
+
+  final results = await _client.from('Posts').update({
+    'title': title,
+    'description': description,
+    'price': price,
+    'is_active': post.isActive,
+    'images': post.imageUrls ?? [],
+  }).eq('id', post.id ?? 0).select();
+
+  if (results == null || results.isEmpty) {
+    return false;
+  }
+  
+  return true;
   }
 
   //* Delete Post
