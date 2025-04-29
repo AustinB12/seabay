@@ -35,7 +35,7 @@ class DbService {
     final results = await _client
         .from('Posts')
         .select('id, title, description, price, is_active, user_id')
-        .order('created_at', ascending: true)
+        .order('created_at', ascending: false)
         .limit(50);
 
     if (results.isEmpty) return [];
