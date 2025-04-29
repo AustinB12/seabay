@@ -1,15 +1,21 @@
 import 'package:seabay_app/api/types.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-class DbService {
-  final SupabaseClient _client = Supabase.instance.client;
+final _client = Supabase.instance.client;
 
+class DbService {
   String? userId;
 
   DbService() : userId = null;
 
   static String? get currentUserId =>
       Supabase.instance.client.auth.currentSession?.user.id;
+
+  final postsStream = _client
+      .from('Posts')
+      .stream(primaryKey: ['id'])
+      .neq('user_id', _client.auth.currentUser?.id as String)
+      .order('created_at');
 
   final usersPosts = currentUserId!.isNotEmpty
       ? Supabase.instance.client
@@ -27,18 +33,27 @@ class DbService {
           .asStream()
       : null;
 
+  final p = Supabase.instance.client.from('Posts').stream(primaryKey: [
+    'id'
+  ]).map((posts) => posts.map((postMap) => Post.fromMap(postMap)).toList());
+
   final allPosts = Supabase.instance.client
       .from('Posts')
       .select('*')
-      .order('created_at', ascending: true)
-      .asStream();
+      .order('created_at', ascending: false)
+      .asStream()
+      .map((posts) => posts.map((postMap) => Post.fromMap(postMap)).toList());
+
+//   final allPosts = Supabase.instance.client.from('Posts').stream(primaryKey: [
+//     'id'
+//   ]).map((posts) => posts.map((postMap) => Post.fromMap(postMap)).toList());
 
   //* Get Posts
   Future<List<Post>> getPosts() async {
     final results = await _client
         .from('Posts')
         .select('id, title, description, price, is_active, user_id')
-        .order('created_at', ascending: true)
+        .order('created_at', ascending: false)
         .limit(50);
 
     if (results.isEmpty) return [];
@@ -168,11 +183,10 @@ class DbService {
   }
 
   //* Delete Post
-  Future<bool> deletePostById(int postId) async {
-    final result =
-        await _client.from('Posts').delete().eq('id', postId).select();
-
-    return result.isEmpty;
+  Future deletePostById(int postId) async {
+    print("called delete");
+    print(postId);
+    await _client.from('Posts').delete().eq('id', postId);
   }
 
   //* Get Wishlists
