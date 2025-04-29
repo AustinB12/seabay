@@ -112,7 +112,7 @@ void toggleWishlist(int postId, String postOwnerId) async {
         context: context,
         builder: (context) => AlertDialog(
                 title: const Text('Delete Post'),
-                content: const Text('Are you sure you to delete this post?'),
+                content: const Text('Are you sure you want to delete this post?'),
                 actions: [
                   TextButton(
                     onPressed: () => Navigator.pop(context),
