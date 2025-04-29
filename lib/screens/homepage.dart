@@ -1,3 +1,5 @@
+import 'package:seabay_app/api/posts.dart';
+
 import 'login.dart';
 import 'profile.dart';
 import 'create_post.dart';
@@ -8,8 +10,6 @@ import 'package:seabay_app/api/db_service.dart';
 import 'package:seabay_app/screens/post_details.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-final sb = Supabase.instance.client;
-
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
@@ -19,52 +19,11 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   final currentUser = Supabase.instance.client.auth.currentUser;
-//   List<Post> posts = [];
   List<int> wishlistPostIds = [];
-//   List<WishList> usersWishlists = [];
-//   bool isLoading = true;
 
   final auth = AuthService();
   final db = DbService();
-
-  void toggleWishlist(int postId, String postOwnerId) async {
-    // if (postOwnerId == currentUser!.id) {
-    //   ScaffoldMessenger.of(context).showSnackBar(
-    //     const SnackBar(content: Text('You can’t wishlist your own post.')),
-    //   );
-    //   return;
-    // }
-
-    // final isWishlisted = wishlistPostIds.contains(postId);
-
-    // if (isWishlisted) {
-    //   await db.removePostIdFromWishlistJson(postId);
-    // } else {
-    //   await db.addPostIdtoWishListJson(postId);
-    // }
-  }
-
-// void loadPostsAndWishlist() async {
-//   try {
-//     final postsData = await db.getPosts();
-
-//     final wishlistResults = await db.getWishlists();
-
-//     final List<dynamic> rawPostIds = wishlistResults?['Post_Ids'] ?? [];
-//     final List<int> ids = rawPostIds.cast<int>();
-
-//     setState(() {
-//       posts = postsData;
-//       wishlistPostIds = ids;
-//       isLoading = false;
-//     });
-//   } catch (error) {
-//     log('Error: $error');
-//     setState(() {
-//       isLoading = false;
-//     });
-//   }
-// }
+  final postsDB = PostsService();
 
   void toggleWishlist(int postId, String postOwnerId) async {
     if (postOwnerId == currentUser!.id) {
@@ -81,8 +40,6 @@ class _HomePageState extends State<HomePage> {
     } else {
       await db.addPostIdtoWishListJson(postId);
     }
-
-    // loadPostsAndWishlist();
   }
 
   void _logout(BuildContext context) {
@@ -122,7 +79,7 @@ class _HomePageState extends State<HomePage> {
                   ),
                   TextButton(
                       onPressed: () async {
-                        db.deletePostById(postId);
+                        postsDB.deletePostById(postId);
 
                         Navigator.pop(context);
                         ScaffoldMessenger.of(context).showSnackBar(
@@ -219,7 +176,7 @@ class _HomePageState extends State<HomePage> {
           ],
         ),
         body: StreamBuilder(
-            stream: db.postsStream,
+            stream: postsDB.postsStream,
             builder: (context, snapshot) {
               if (!snapshot.hasData && !snapshot.hasError) {
                 return const Center(child: CircularProgressIndicator());
@@ -250,71 +207,74 @@ class _HomePageState extends State<HomePage> {
                         ),
                         child: GridTile(
                             footer: GridTileBar(
-                                backgroundColor: Colors.grey[600],
-                                title: Text(post.title,
-                                    style:
-                                        const TextStyle(color: Colors.white)),
-                                subtitle: Text(
-                                  '\$${post.price}',
-                                  style:
-                                      TextStyle(color: Colors.greenAccent[400]),
-                                ),
-                                //   leading: Tooltip(
-                                //     message: post.isActive ? 'Active' : 'Inactive',
-                                //     child: Icon(
-                                //       post.isActive
-                                //           ? Icons.check_circle
-                                //           : Icons.crisis_alert_sharp,
-                                //       color:
-                                //           post.isActive ? Colors.green : Colors.red,
-                                //     ),
-                                //   ),
-                                trailing: (post.userId != currentUser!.id)
-                                    ? IconButton(
-                                        icon: Icon(
-                                          isWishlisted
-                                              ? Icons.favorite
-                                              : Icons.favorite_border,
-                                          color: isWishlisted
-                                              ? Colors.red
-                                              : Colors.grey,
-                                        ),
-                                        onPressed: () => toggleWishlist(
-                                            post.id!, post.userId),
-                                      )
-                                    : null
+                              backgroundColor: Colors.grey[600],
+                              title: Text(post.title,
+                                  style: const TextStyle(color: Colors.white)),
+                              subtitle: Text(
+                                '\$${post.price}',
+                                style:
+                                    TextStyle(color: Colors.greenAccent[400]),
+                              ),
+                              //   leading: Tooltip(
+                              //     message: post.isActive ? 'Active' : 'Inactive',
+                              //     child: Icon(
+                              //       post.isActive
+                              //           ? Icons.check_circle
+                              //           : Icons.crisis_alert_sharp,
+                              //       color:
+                              //           post.isActive ? Colors.green : Colors.red,
+                              //     ),
+                              //   ),
+                              trailing: (post.userId != currentUser!.id)
+                                  ? IconButton(
+                                      icon: Icon(
+                                        isWishlisted
+                                            ? Icons.favorite
+                                            : Icons.favorite_border,
+                                        color: isWishlisted
+                                            ? Colors.red
+                                            : Colors.grey,
+                                      ),
+                                      onPressed: () =>
+                                          toggleWishlist(post.id!, post.userId),
+                                    )
+                                  : IconButton(
+                                      icon: const Icon(Icons.delete,
+                                          color: Colors.red),
+                                      onPressed: () => _deletePost(post.id!),
+                                    ),
 
-                                //   Row(
-                                //     mainAxisSize: MainAxisSize.min,
-                                //     children: [
-                                // if (post.userId != currentUser!.id)
-                                //   IconButton(
-                                //     icon: Icon(
-                                //       isWishlisted
-                                //           ? Icons.favorite
-                                //           : Icons.favorite_border,
-                                //       color: isWishlisted
-                                //           ? Colors.red
-                                //           : Colors.grey,
-                                //     ),
-                                //     onPressed: () =>
-                                //         toggleWishlist(post.id!, post.userId),
-                                //   ),
-                                //   if (post.userId == currentUser!.id)
-                                //     IconButton(
-                                //       icon: const Icon(Icons.edit_note,
-                                //           color: Colors.blue),
-                                //       onPressed: () => editPostDialog(post),
-                                //     ),
-                                //   if (post.userId == currentUser!.id)
-                                //     IconButton(
-                                //       icon: const Icon(Icons.delete,
-                                //           color: Colors.red),
-                                //       onPressed: () => _deletePost(post.id!),
-                                //     ),
-                                // ],
-                                //   ),
-                                ),
+                              //   Row(
+                              //     mainAxisSize: MainAxisSize.min,
+                              //     children: [
+                              // if (post.userId != currentUser!.id)
+                              //   IconButton(
+                              //     icon: Icon(
+                              //       isWishlisted
+                              //           ? Icons.favorite
+                              //           : Icons.favorite_border,
+                              //       color: isWishlisted
+                              //           ? Colors.red
+                              //           : Colors.grey,
+                              //     ),
+                              //     onPressed: () =>
+                              //         toggleWishlist(post.id!, post.userId),
+                              //   ),
+                              //   if (post.userId == currentUser!.id)
+                              //     IconButton(
+                              //       icon: const Icon(Icons.edit_note,
+                              //           color: Colors.blue),
+                              //       onPressed: () => editPostDialog(post),
+                              //     ),
+                              //   if (post.userId == currentUser!.id)
+                              //     IconButton(
+                              //       icon: const Icon(Icons.delete,
+                              //           color: Colors.red),
+                              //       onPressed: () => _deletePost(post.id!),
+                              //     ),
+                              // ],
+                              //   ),
+                            ),
                             child: FadeInImage(
                                 placeholder: AssetImage('assets/loading.png'),
                                 image: NetworkImage(

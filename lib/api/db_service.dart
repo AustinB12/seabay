@@ -1,3 +1,4 @@
+import 'package:seabay_app/api/posts.dart';
 import 'package:seabay_app/api/types.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -10,20 +11,6 @@ class DbService {
 
   static String? get currentUserId =>
       Supabase.instance.client.auth.currentSession?.user.id;
-
-  final postsStream = _client
-      .from('Posts')
-      .stream(primaryKey: ['id'])
-      .neq('user_id', _client.auth.currentUser?.id as String)
-      .order('created_at');
-
-  final usersPosts = currentUserId!.isNotEmpty
-      ? Supabase.instance.client
-          .from('Posts')
-          .select('*')
-          .eq('user_id', currentUserId ?? '')
-          .asStream()
-      : null;
 
   final usersWishlists = currentUserId!.isNotEmpty
       ? Supabase.instance.client
@@ -81,16 +68,6 @@ class DbService {
         .inFilter('id', ids);
 
     return result.map<Post>((row) => Post.fromMap(row)).toList();
-  }
-
-  //* Create Post
-  Future createPost(Post newPost) async {
-    await _client.from('Posts').insert({
-      'title': newPost.title,
-      'description': newPost.description,
-      'price': newPost.price,
-      'user_id': newPost.userId
-    });
   }
 
 //* Mark Post Inactive
@@ -180,13 +157,6 @@ class DbService {
     }).eq('id', post.id ?? 0);
 
     return results.isEmpty;
-  }
-
-  //* Delete Post
-  Future deletePostById(int postId) async {
-    print("called delete");
-    print(postId);
-    await _client.from('Posts').delete().eq('id', postId);
   }
 
   //* Get Wishlists
