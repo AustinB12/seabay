@@ -103,6 +103,23 @@ class _ProfilePageState extends State<ProfilePage> {
                       controller: titleController,
                       decoration: const InputDecoration(labelText: 'Title'),
                     ),
+                    TextField(
+                      controller: descController,
+                      decoration:
+                          const InputDecoration(labelText: 'Description'),
+                    ),
+                    TextField(
+                      controller: priceController,
+                      decoration: const InputDecoration(labelText: 'Price'),
+                      keyboardType: TextInputType.number,
+                    ),
+                    if (errorMessage != null)
+                      Padding(
+                          padding: const EdgeInsets.only(top: 8),
+                          child: Text(
+                            errorMessage!,
+                            style: const TextStyle(color: Colors.red),
+                          )),
                     ElevatedButton(
                       onPressed: () async {
                         final updatedPost = Post(
@@ -298,6 +315,82 @@ class _ProfilePageState extends State<ProfilePage> {
             ));
   }
 
+  void _editProfileDialog() {
+    String? errorMessage;
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setStateDialog) {
+            return AlertDialog(
+              title: const Text('Edit Profile'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: firstNameController,
+                    decoration: const InputDecoration(labelText: 'First Name'),
+                  ),
+                  TextField(
+                    controller: lastNameController,
+                    decoration: const InputDecoration(labelText: 'Last Name'),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.only(top: 10),
+                    child: Text(
+                      errorMessage ?? '',
+                      style: const TextStyle(color: Colors.red),
+                    ),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Cancel'),
+                ),
+                ElevatedButton(
+                  onPressed: () async {
+                    final firstName = firstNameController.text.trim();
+                    final lastName = lastNameController.text.trim();
+                    final regName = RegExp(r'^[a-zA-Z]+$');
+
+                    if (firstName.isEmpty || lastName.isEmpty) {
+                      setStateDialog(() {
+                        errorMessage = 'First and Last Name cannot be empty.';
+                      });
+                      return;
+                    }
+
+                    if (!regName.hasMatch(firstName) ||
+                        !regName.hasMatch(lastName)) {
+                      setStateDialog(() {
+                        errorMessage = 'Names can only include letters';
+                      });
+                      return;
+                    }
+
+                    Navigator.pop(context);
+                    await auth.updateUserProfile(SeabayUser(
+                      firstName: firstNameController.text,
+                      lastName: lastNameController.text,
+                    ));
+
+                    setState(() {
+                      _profile = auth.getCurrentUserProfile();
+                    });
+                  },
+                  child: const Text('Save'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final usersEmail = auth.getCurrentUserEmail();
@@ -318,10 +411,10 @@ class _ProfilePageState extends State<ProfilePage> {
           ),
         ],
       ),
-      // floatingActionButton: FloatingActionButton(
-      //   onPressed: _editProfileDialog,
-      //   child: const Icon(Icons.edit),
-      // ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _editProfileDialog,
+        child: const Icon(Icons.edit),
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -367,7 +460,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 return const Center(child: CircularProgressIndicator());
               },
             ),
-            const Text('Saved Posts (Wishlist):',
+            const Text('Wishlists:',
                 style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
