@@ -1,5 +1,6 @@
 import 'package:seabay_app/api/posts.dart';
 import 'package:seabay_app/api/types.dart';
+import 'package:seabay_app/api/wishlists.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 final _client = Supabase.instance.client;
@@ -148,35 +149,39 @@ class DbService {
 //todo fix this
   //* Update Post
   Future<bool> updatePost(Post post) async {
-  final title = post.title;
-  final description = post.description;
-  final price = post.price;
+    final title = post.title;
+    final description = post.description;
+    final price = post.price;
 
-  if (title == null || title.isEmpty) {
-    return false;
-  }
+    if (title == null || title.isEmpty) {
+      return false;
+    }
 
-  if (description == null || description.isEmpty) {
-    return false;
-  }
+    if (description == null || description.isEmpty) {
+      return false;
+    }
 
-  if (price == null || price <= 0) {
-    return false;
-  }
+    if (price == null || price <= 0) {
+      return false;
+    }
 
-  final results = await _client.from('Posts').update({
-    'title': title,
-    'description': description,
-    'price': price,
-    'is_active': post.isActive,
-    'images': post.imageUrls ?? [],
-  }).eq('id', post.id ?? 0).select();
+    final results = await _client
+        .from('Posts')
+        .update({
+          'title': title,
+          'description': description,
+          'price': price,
+          'is_active': post.isActive,
+          'images': post.imageUrls ?? [],
+        })
+        .eq('id', post.id ?? 0)
+        .select();
 
-  if (results == null || results.isEmpty) {
-    return false;
-  }
-  
-  return true;
+    if (results == null || results.isEmpty) {
+      return false;
+    }
+
+    return true;
   }
 
   //* Get Wishlists
@@ -286,14 +291,5 @@ class DbService {
         await _client.from('Wish_Lists').delete().eq('id', wishlistId).select();
 
     return result.isEmpty;
-  }
-
-  //* Add Post To Wishlist
-  Future<bool> addPostToWishlist(int postId, int wishlistId) async {
-    final result = await _client
-        .from('Posts_To_Wishlists')
-        .insert({'wishlist_id': wishlistId, 'post_id': postId}).select();
-
-    return result.isNotEmpty;
   }
 }

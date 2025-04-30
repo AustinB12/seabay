@@ -31,34 +31,3 @@ class SeabayUser {
     };
   }
 }
-
-class WishList {
-  int id;
-  String name;
-  String description;
-  String userId;
-
-  WishList(
-      {required this.id,
-      required this.name,
-      required this.description,
-      required this.userId});
-
-  factory WishList.fromMap(Map<String, dynamic> map) {
-    return WishList(
-      id: map['id'] as int,
-      name: map['name'] as String,
-      description: map['description'] as String,
-      userId: map['user_id'] as String,
-    );
-  }
-
-  Map<String, dynamic> toMap() {
-    return {
-      'id': id,
-      'name': name,
-      'description': description,
-      'userId': userId,
-    };
-  }
-}

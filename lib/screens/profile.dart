@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:seabay_app/api/db_service.dart';
 import 'package:seabay_app/api/posts.dart';
 import 'package:seabay_app/api/types.dart';
+import 'package:seabay_app/api/wishlists.dart';
 import 'package:seabay_app/auth/auth.dart';
 import 'package:seabay_app/components/profile_picture.dart';
 import 'login.dart';

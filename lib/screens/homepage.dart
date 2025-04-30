@@ -1,3 +1,5 @@
+import 'package:seabay_app/api/wishlists.dart';
+
 import 'login.dart';
 import 'profile.dart';
 import 'create_post.dart';
@@ -21,6 +23,7 @@ class _HomePageState extends State<HomePage> {
   final auth = AuthService();
   final db = DbService();
   final postsDB = PostsService();
+  final wlDB = WishlistService();
 
   void toggleWishlist(int postId, String postOwnerId) async {
     if (postOwnerId == currentUser!.id) {
@@ -33,8 +36,10 @@ class _HomePageState extends State<HomePage> {
     final isWishlisted = wishlistPostIds.contains(postId);
 
     if (isWishlisted) {
+      // wlDB.removePostFromWishlist(postId, listId)
       await db.removePostIdFromWishlistJson(postId);
     } else {
+      // wlDB.addPostToWishlist(postId, listId)
       await db.addPostIdtoWishListJson(postId);
     }
   }
@@ -60,6 +65,36 @@ class _HomePageState extends State<HomePage> {
       context,
       MaterialPageRoute(builder: (context) => const CreatePostPage()),
     );
+  }
+
+  void pickWishlist(int postId) async {
+    List<WishList> wls = await wlDB.getUsersWishlists();
+    showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+              title: const Text('Select Wishlist'),
+              content: Container(
+                height: 200,
+                child: ListView.builder(
+                    itemCount: wls.length,
+                    itemBuilder: (context, index) {
+                      final wl = wls[index];
+                      return Card(
+                        child: ListTile(
+                          title: Text(wl.name),
+                          subtitle:
+                              Text('${wl.description.substring(0, 12)}...'),
+                        ),
+                      );
+                    }),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Cancel'),
+                ),
+              ],
+            ));
   }
 
   void _deletePost(int postId) {
@@ -149,6 +184,10 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
+    wlDB.postsToWishlistsStream.listen((List<Map<String, dynamic>> data) {
+      print(data);
+    });
+
     return Scaffold(
         appBar: AppBar(
           title: const Text('Homepage'),
@@ -231,8 +270,7 @@ class _HomePageState extends State<HomePage> {
                                             ? Colors.red
                                             : Colors.grey,
                                       ),
-                                      onPressed: () =>
-                                          toggleWishlist(post.id!, post.userId),
+                                      onPressed: () => pickWishlist(post.id!),
                                     )
                                   : IconButton(
                                       icon: const Icon(Icons.delete,
