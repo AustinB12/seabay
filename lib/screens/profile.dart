@@ -89,134 +89,106 @@ class _ProfilePageState extends State<ProfilePage> {
     final titleController = TextEditingController(text: post.title);
     final descController = TextEditingController(text: post.description);
     final priceController = TextEditingController(text: post.price?.toString());
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Edit Post'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: titleController,
-              decoration: const InputDecoration(labelText: 'Title'),
-            ),
-            TextField(
-              controller: descController,
-              decoration: const InputDecoration(labelText: 'Description'),
-            ),
-            TextField(
-              controller: priceController,
-              decoration: const InputDecoration(labelText: 'Price'),
-              keyboardType: TextInputType.number,
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              final updatedPost = Post(
-                id: post.id,
-                title: titleController.text,
-                description: descController.text,
-                price: int.tryParse(priceController.text) ?? 0,
-                isActive: post.isActive,
-                userId: post.userId,
-                imageUrls: post.imageUrls,
-              );
-
-              await db.updatePost(updatedPost);
-              await _refreshUserPosts();
-              Navigator.pop(context);
-              setState(() {
-                _wishlistPosts = db.loadWishlistedPosts();
-                _userPosts = db.getPostsByUser();
-              });
-            },
-            child: const Text('Save'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _editProfileDialog() {
     String? errorMessage;
 
     showDialog(
       context: context,
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setStateDialog) {
-            return AlertDialog(
-              title: const Text('Edit Profile'),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TextField(
-                    controller: firstNameController,
-                    decoration: const InputDecoration(labelText: 'First Name'),
-                  ),
-                  TextField(
-                    controller: lastNameController,
-                    decoration: const InputDecoration(labelText: 'Last Name'),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(top: 10),
-                    child: Text(
-                      errorMessage ?? '',
-                      style: const TextStyle(color: Colors.red),
+      builder: (context) => StatefulBuilder(
+          builder: (context, setState) => AlertDialog(
+                title: const Text('Edit Post'),
+                content: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      controller: titleController,
+                      decoration: const InputDecoration(labelText: 'Title'),
                     ),
+                    ElevatedButton(
+                      onPressed: () async {
+                        final updatedPost = Post(
+                          id: post.id,
+                          title: titleController.text,
+                          description: descController.text,
+                          price: int.tryParse(priceController.text) ?? 0,
+                          isActive: post.isActive,
+                          userId: post.userId,
+                          imageUrls: post.imageUrls,
+                        );
+
+                        await db.updatePost(updatedPost);
+                        await _refreshUserPosts();
+                        Navigator.pop(context);
+                        setState(() {
+                          _wishlistPosts = db.loadWishlistedPosts();
+                          _userPosts = db.getPostsByUser();
+                        });
+                      },
+                      child: const Text('Save'),
+                    ),
+                    if (errorMessage != null)
+                      Padding(
+                          padding: const EdgeInsets.only(top: 8),
+                          child: Text(
+                            errorMessage!,
+                            style: const TextStyle(color: Colors.red),
+                          ))
+                  ],
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text('Cancel'),
+                  ),
+                  ElevatedButton(
+                    onPressed: () async {
+                      final title = titleController.text.trim();
+                      final description = descController.text.trim();
+                      final price = priceController.text.trim();
+
+                      if (title.isEmpty ||
+                          description.isEmpty ||
+                          price.isEmpty) {
+                        setState(() {
+                          errorMessage = 'All fields are required.';
+                        });
+                        return;
+                      }
+
+                      final priceValue = int.tryParse(price);
+                      if (priceValue == null || priceValue <= 0) {
+                        setState(() {
+                          errorMessage = 'Price cannot include letters.';
+                        });
+                        return;
+                      }
+
+                      final updatedPost = Post(
+                        id: post.id,
+                        title: titleController.text,
+                        description: descController.text,
+                        price: int.tryParse(priceController.text) ?? 0,
+                        isActive: post.isActive,
+                        userId: post.userId,
+                        imageUrls: post.imageUrls,
+                      );
+
+                      await db.updatePost(updatedPost);
+                      await _refreshUserPosts();
+                      Navigator.pop(context);
+
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                            content: Text('Post updated successfully.')),
+                      );
+                      setState(() {
+                        _wishlistPosts = db.loadWishlistedPosts();
+                        _userPosts = db.getPostsByUser();
+                      });
+                    },
+                    child: const Text('Save'),
                   ),
                 ],
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text('Cancel'),
-                ),
-                ElevatedButton(
-                  onPressed: () async {
-                    final firstName = firstNameController.text.trim();
-                    final lastName = lastNameController.text.trim();
-                    final regName = RegExp(r'^[a-zA-Z]+$');
-
-                    if (firstName.isEmpty || lastName.isEmpty) {
-                      setStateDialog(() {
-                        errorMessage = 'First and Last Name cannot be empty.';
-                      });
-                      return;
-                    }
-
-                    if (!regName.hasMatch(firstName) ||
-                        !regName.hasMatch(lastName)) {
-                      setStateDialog(() {
-                        errorMessage = 'Names can only include letters';
-                      });
-                      return;
-                    }
-
-                    Navigator.pop(context);
-                    await auth.updateUserProfile(SeabayUser(
-                      firstName: firstNameController.text,
-                      lastName: lastNameController.text,
-                    ));
-
-                    setState(() {
-                      _profile = auth.getCurrentUserProfile();
-                    });
-                  },
-                  child: const Text('Save'),
-                ),
-              ],
-            );
-          },
-        );
-      },
+              )),
     );
   }
 
@@ -346,10 +318,10 @@ class _ProfilePageState extends State<ProfilePage> {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _editProfileDialog,
-        child: const Icon(Icons.edit),
-      ),
+      // floatingActionButton: FloatingActionButton(
+      //   onPressed: _editProfileDialog,
+      //   child: const Icon(Icons.edit),
+      // ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(

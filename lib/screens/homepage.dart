@@ -18,7 +18,6 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   final currentUser = Supabase.instance.client.auth.currentUser;
   List<int> wishlistPostIds = [];
-
   final auth = AuthService();
   final db = DbService();
   final postsDB = PostsService();
@@ -42,7 +41,6 @@ class _HomePageState extends State<HomePage> {
 
   void _logout(BuildContext context) {
     auth.signOut();
-
     Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(builder: (context) => const LoginPage()),
@@ -164,12 +162,12 @@ class _HomePageState extends State<HomePage> {
             IconButton(
               icon: const Icon(Icons.person),
               onPressed: () => _goToProfile(context),
-              tooltip: 'Profile Page',
+              tooltip: 'Go to profile',
             ),
             IconButton(
               icon: const Icon(Icons.logout),
               onPressed: () => _logout(context),
-              tooltip: 'Logout',
+              tooltip: 'Sign Out',
             ),
           ],
         ),
