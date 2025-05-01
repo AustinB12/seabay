@@ -25,7 +25,6 @@ class _HomePageState extends State<HomePage> {
   final wlDb = WishlistService();
 
   late List<Post> _allPosts = [];
-  late List<WishList> _usersWishlists = [];
   late List<int> _wishlistPostIds = [];
   late int _userWishlistId = 0;
 
@@ -122,37 +121,34 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _refreshPosts() async {
-    setState(() {
-      _getPosts();
-      _getUsersWishlistedPostIds();
-    });
+    await _getPosts();
+    await _getUsersWishlistedPostIds();
   }
 
   void toggleWishlist(int postId) async {
     setState(() {
       _loading = true;
     });
-    final isWishlisted = _wishlistPostIds.contains(postId);
+    bool isWishlisted = _wishlistPostIds.contains(postId);
 
     if (isWishlisted) {
-      wlDb.removePostFromWishlist(postId);
+      await wlDb.removePostFromWishlist(postId);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
             content:
                 Center(child: Text('Post has been removed from wishlist.'))),
       );
     } else {
-      wlDb.addPostToWishlist(postId, _userWishlistId);
+      await wlDb.addPostToWishlist(postId, _userWishlistId);
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
           content: Center(
               child: Text('Post has been saved. View post on your profile.'))));
     }
+
+    await _getUsersWishlistedPostIds();
     setState(() {
       _loading = false;
     });
-    _getPosts();
-    _getUsersWishlistedPostIds();
-    Navigator.pop(context);
   }
 
   void _deletePost(int postId) {
@@ -228,7 +224,7 @@ class _HomePageState extends State<HomePage> {
               );
               await postDb.updatePost(updatedPost);
               Navigator.pop(context);
-              await _refreshPosts();
+              _refreshPosts();
             },
             child: const Text('Save'),
           ),
