@@ -1,5 +1,48 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:seabay_app/api/storage_service.dart';
+import 'package:seabay_app/auth/auth.dart';
+
+final storage = StorageService();
+final auth = AuthService();
+
+File? imageFile;
+String? postImgUrl = '';
+
+//* Pick an image
+
+Future pickImage() async {
+  final ImagePicker picker = ImagePicker();
+
+  final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+
+  if (image == null) {
+    return;
+  }
+
+  print('\n\n');
+  print(image.path);
+  print('\n\n');
+
+  final imageExtension = image.path.split('.').last.toLowerCase();
+  final imageBytes = await image.readAsBytes();
+  final userId = auth.getCurrentUserId();
+  final imagePath =
+      '/$userId/${DateTime.now().millisecondsSinceEpoch.toString()}';
+
+  print('\n\n');
+  print(imagePath);
+  print(imageExtension);
+  print('\n\n');
+
+  await storage.uploadProfilePicBucket(imagePath, imageBytes, imageExtension);
+
+  String imageUrl = await storage.getProfileImageUrl(imagePath);
+
+  storage.updateUserProfilePictureUrl(imageUrl);
+}
 
 class ProfilePic extends StatelessWidget {
   final String picUrl;
@@ -45,7 +88,7 @@ class ProfilePic extends StatelessWidget {
                   ),
                   backgroundColor: const Color(0xFFF5F6F9),
                 ),
-                onPressed: () {},
+                onPressed: () => pickImage(),
                 child: SvgPicture.string(cameraIcon),
               ),
             ),

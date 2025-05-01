@@ -15,27 +15,35 @@ class StorageService {
     return await _client.storage.getBucket('post-pics');
   }
 
+  Future updateUserProfilePictureUrl(String publicUrl) async {
+    await _client.from('User_Profiles').update({'profile_pic': publicUrl}).eq(
+        'auth_id', _client.auth.currentUser!.id);
+  }
+
   Future<String> getPostImageUrl(String path) async {
     return _client.storage.from('post-pics').getPublicUrl(path);
   }
 
+  Future<String> getProfileImageUrl(String path) async {
+    return _client.storage.from('profile-pics').getPublicUrl(path);
+  }
+
   ///
-  Future<String> uploadProfilePicBucket(String filePath) async {
-    final avatarFile = File(filePath);
-    return await _client.storage.from('profile-pics').upload(
-          '${_client.auth.currentUser?.id}/${filePath}',
-          avatarFile,
-          fileOptions: const FileOptions(cacheControl: '3600', upsert: false),
+  Future uploadProfilePicBucket(
+      String path, Uint8List image, String? imageExtension) async {
+    await _client.storage.from('profile-pics').uploadBinary(
+          path,
+          image,
+          fileOptions: FileOptions(
+            upsert: true,
+            contentType: 'image/$imageExtension',
+          ),
         );
   }
 
   ///
   Future uploadPostPicBucket(
       String path, Uint8List image, String? imageExtension) async {
-    print('\n\n\n');
-    print(path);
-    print('\n\n\n');
-    print(imageExtension);
     await _client.storage.from('post-pics').uploadBinary(
           path,
           image,

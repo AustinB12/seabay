@@ -105,7 +105,6 @@ class _CreatePostPageState extends State<CreatePostPage> {
     }
     setState(() {
       imageFile = File(image.path);
-      // imagePath = image.path;
     });
 
     final imageExtension = image.path.split('.').last.toLowerCase();
