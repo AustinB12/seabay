@@ -57,7 +57,15 @@ class _LoginPageState extends State<LoginPage> {
       body: Padding(
         padding: const EdgeInsets.all(20.0),
         child: Column(
+          mainAxisSize: MainAxisSize.max,
+          mainAxisAlignment: MainAxisAlignment.start,
+          spacing: 15,
           children: [
+            Column(
+              mainAxisAlignment: MainAxisAlignment.start,
+              mainAxisSize: MainAxisSize.max,
+              children: [Image(image: AssetImage('assets/Seabay.png'))],
+            ),
             TextField(
               controller: emailController,
               decoration: const InputDecoration(labelText: 'Email'),
@@ -74,14 +82,20 @@ class _LoginPageState extends State<LoginPage> {
               const SizedBox(height: 10),
               Text(errorMessage, style: const TextStyle(color: Colors.red)),
             ],
-            ElevatedButton(
-              onPressed: _login,
-              child: const Text('Login'),
-            ),
-            ElevatedButton(
-              onPressed: () => _goToCreateAccountPage(context),
-              child: const Text('Sign Up'),
-            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              spacing: 30,
+              children: [
+                ElevatedButton(
+                  onPressed: _login,
+                  child: const Text('Login'),
+                ),
+                ElevatedButton(
+                  onPressed: () => _goToCreateAccountPage(context),
+                  child: const Text('Sign Up'),
+                ),
+              ],
+            )
           ],
         ),
       ),
