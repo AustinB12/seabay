@@ -121,7 +121,6 @@ class _CreatePostPageState extends State<CreatePostPage> {
       postImgUrl = imageUrl;
     });
 
-    // onUpload(imageUrl);
   }
 
   //* Upload an image
