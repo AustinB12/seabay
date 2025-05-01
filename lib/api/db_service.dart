@@ -1,5 +1,4 @@
 import 'package:seabay_app/api/posts.dart';
-import 'package:seabay_app/api/types.dart';
 import 'package:seabay_app/api/wishlists.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -153,7 +152,7 @@ class DbService {
     final description = post.description;
     final price = post.price;
 
-    if (title == null || title.isEmpty) {
+    if (title.isEmpty) {
       return false;
     }
 
@@ -177,7 +176,7 @@ class DbService {
         .eq('id', post.id ?? 0)
         .select();
 
-    if (results == null || results.isEmpty) {
+    if (results.isEmpty) {
       return false;
     }
 

@@ -93,8 +93,7 @@ class _CreatePostPageState extends State<CreatePostPage> {
   File? imageFile;
   String? postImgUrl = '';
 
-  //* Pick an image
-
+  /// Pick an image to use in the listing
   Future pickImage() async {
     final ImagePicker picker = ImagePicker();
 
@@ -120,11 +119,7 @@ class _CreatePostPageState extends State<CreatePostPage> {
     setState(() {
       postImgUrl = imageUrl;
     });
-
-    // onUpload(imageUrl);
   }
-
-  //* Upload an image
 
   @override
   Widget build(BuildContext context) {

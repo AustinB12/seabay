@@ -11,8 +11,7 @@ final auth = AuthService();
 File? imageFile;
 String? postImgUrl = '';
 
-//* Pick an image
-
+/// Pick an image to use as a profile picture
 Future pickImage() async {
   final ImagePicker picker = ImagePicker();
 
@@ -22,22 +21,13 @@ Future pickImage() async {
     return;
   }
 
-  print('\n\n');
-  print(image.path);
-  print('\n\n');
-
   final imageExtension = image.path.split('.').last.toLowerCase();
   final imageBytes = await image.readAsBytes();
   final userId = auth.getCurrentUserId();
   final imagePath =
       '/$userId/${DateTime.now().millisecondsSinceEpoch.toString()}';
 
-  print('\n\n');
-  print(imagePath);
-  print(imageExtension);
-  print('\n\n');
-
-  await storage.uploadProfilePicBucket(imagePath, imageBytes, imageExtension);
+  storage.uploadProfilePicBucket(imagePath, imageBytes, imageExtension);
 
   String imageUrl = await storage.getProfileImageUrl(imagePath);
 
