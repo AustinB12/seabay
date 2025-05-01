@@ -2,8 +2,8 @@ import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:seabay_app/api/db_service.dart';
+import 'package:seabay_app/api/posts.dart';
 import 'package:seabay_app/api/storage_service.dart';
-import 'package:seabay_app/api/types.dart';
 import 'package:seabay_app/auth/auth.dart';
 import 'homepage.dart';
 
@@ -23,6 +23,7 @@ class _CreatePostPageState extends State<CreatePostPage> {
 
   final db = DbService();
   final storage = StorageService();
+  final postsDB = PostsService();
   final auth = AuthService();
 
   Future<void> _createPost() async {
@@ -30,7 +31,7 @@ class _CreatePostPageState extends State<CreatePostPage> {
     final description = _descriptionController.text.trim();
     final inputPrice = _priceController.text.trim();
     final priceParsed = double.tryParse(inputPrice);
-     
+
     // final price = (double.tryParse(_priceController.text) ?? 0.0).toInt();
     if (title.isEmpty || description.isEmpty || inputPrice == 0) {
       setState(() {
@@ -39,7 +40,7 @@ class _CreatePostPageState extends State<CreatePostPage> {
       return;
     }
 
-    if(priceParsed == null){
+    if (priceParsed == null) {
       setState(() {
         errorMessage = 'Price must be a number.';
         successMessage = '';
@@ -57,7 +58,7 @@ class _CreatePostPageState extends State<CreatePostPage> {
     );
 
     try {
-      await db.createPost(newPost);
+      postsDB.createPost(newPost);
       Navigator.pop(context);
       setState(() {
         errorMessage = '';
@@ -104,7 +105,6 @@ class _CreatePostPageState extends State<CreatePostPage> {
     }
     setState(() {
       imageFile = File(image.path);
-      // imagePath = image.path;
     });
 
     final imageExtension = image.path.split('.').last.toLowerCase();

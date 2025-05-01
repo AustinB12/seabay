@@ -1,12 +1,14 @@
- import 'package:flutter/material.dart';
-import 'package:seabay_app/api/db_service.dart';
-import 'package:seabay_app/api/types.dart';
-import 'package:seabay_app/auth/auth.dart';
-import 'package:seabay_app/screens/post_details.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:seabay_app/api/wishlists.dart';
+
 import 'login.dart';
 import 'profile.dart';
 import 'create_post.dart';
+import 'package:flutter/material.dart';
+import 'package:seabay_app/api/posts.dart';
+import 'package:seabay_app/auth/auth.dart';
+import 'package:seabay_app/api/db_service.dart';
+import 'package:seabay_app/screens/post_details.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -20,13 +22,26 @@ class _HomePageState extends State<HomePage> {
   List<int> wishlistPostIds = [];
   final auth = AuthService();
   final db = DbService();
+  final postsDB = PostsService();
+  final wlDB = WishlistService();
 
-  late Future<List<Post>> _postsFuture;
+  void toggleWishlist(int postId, String postOwnerId) async {
+    if (postOwnerId == currentUser!.id) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('You can’t wishlist your own post.')),
+      );
+      return;
+    }
 
-  @override
-  void initState() {
-    super.initState();
-    _postsFuture = db.getPosts();
+    final isWishlisted = wishlistPostIds.contains(postId);
+
+    if (isWishlisted) {
+      // wlDB.removePostFromWishlist(postId, listId)
+      await db.removePostIdFromWishlistJson(postId);
+    } else {
+      // wlDB.addPostToWishlist(postId, listId)
+      await db.addPostIdtoWishListJson(postId);
+    }
   }
 
   void _logout(BuildContext context) {
@@ -52,60 +67,60 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Future<void> _refreshPosts() async {
-    setState(() {
-      _postsFuture = db.getPosts();
-    });
-  }
-
-  void toggleWishlist(int postId, String postOwnerId) async {
-    if (postOwnerId == currentUser!.id) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('You can’t wishlist your own post.')),
-      );
-      return;
-    }
-
-    final isWishlisted = wishlistPostIds.contains(postId);
-
-    if (isWishlisted) {
-      await db.removePostIdFromWishlistJson(postId);
-      setState(() {
-        wishlistPostIds.remove(postId);
-      });
-    } else {
-      await db.addPostIdtoWishListJson(postId);
-      setState(() {
-        wishlistPostIds.add(postId);
-      });
-    }
+  void pickWishlist(int postId) async {
+    List<WishList> wls = await wlDB.getUsersWishlists();
+    showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+              title: const Text('Select Wishlist'),
+              content: Container(
+                height: 200,
+                child: ListView.builder(
+                    itemCount: wls.length,
+                    itemBuilder: (context, index) {
+                      final wl = wls[index];
+                      return Card(
+                        child: ListTile(
+                          title: Text(wl.name),
+                          subtitle:
+                              Text('${wl.description.substring(0, 12)}...'),
+                        ),
+                      );
+                    }),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Cancel'),
+                ),
+              ],
+            ));
   }
 
   void _deletePost(int postId) {
     showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete Post'),
-        content: const Text('Are you sure you want to delete this post?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () async {
-              await db.deletePostById(postId);
-              Navigator.pop(context);
-              await _refreshPosts();
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Post deleted successfully!')),
-              );
-            },
-            child: const Text('Delete', style: TextStyle(color: Colors.red)),
-          ),
-        ],
-      ),
-    );
+        context: context,
+        builder: (context) => AlertDialog(
+                title: const Text('Delete Post'),
+                content: const Text('Are you sure you to delete this post?'),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text('Cancel'),
+                  ),
+                  TextButton(
+                      onPressed: () async {
+                        postsDB.deletePostById(postId);
+
+                        Navigator.pop(context);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                              content: Text('Post deleted successfully!')),
+                        );
+                      },
+                      child: const Text('Delete',
+                          style: TextStyle(color: Colors.red)))
+                ]));
   }
 
   void editPostDialog(Post post) {
@@ -152,8 +167,13 @@ class _HomePageState extends State<HomePage> {
                 imageUrls: post.imageUrls,
               );
               await db.updatePost(updatedPost);
+              //   final updatedPosts = await db.getPosts();
+
+              //   setState(() {
+              //     posts = updatedPosts;
+              //   });
+
               Navigator.pop(context);
-              await _refreshPosts();
             },
             child: const Text('Save'),
           ),
@@ -164,97 +184,140 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
+    wlDB.postsToWishlistsStream.listen((List<Map<String, dynamic>> data) {
+      print(data);
+    });
+
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Homepage'),
-        automaticallyImplyLeading: false,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.add),
-            onPressed: () => _goToCreatePost(context),
-            tooltip: 'Create Post',
-          ),
-          IconButton(
-            icon: const Icon(Icons.person),
-            onPressed: () => _goToProfile(context),
-            tooltip: 'Profile Page',
-          ),
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () => _logout(context),
-            tooltip: 'Logout',
-          ),
-        ],
-      ),
-      body: FutureBuilder<List<Post>>(
-        future: _postsFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return const Center(child: Text('No posts available.'));
-          }
+        appBar: AppBar(
+          title: const Text('Homepage'),
+          automaticallyImplyLeading: false,
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.add),
+              onPressed: () => _goToCreatePost(context),
+              tooltip: 'Create Post',
+            ),
+            IconButton(
+              icon: const Icon(Icons.person),
+              onPressed: () => _goToProfile(context),
+              tooltip: 'Go to profile',
+            ),
+            IconButton(
+              icon: const Icon(Icons.logout),
+              onPressed: () => _logout(context),
+              tooltip: 'Sign Out',
+            ),
+          ],
+        ),
+        body: StreamBuilder(
+            stream: postsDB.postsStream,
+            builder: (context, snapshot) {
+              if (!snapshot.hasData && !snapshot.hasError) {
+                return const Center(child: CircularProgressIndicator());
+              }
+              if (snapshot.hasError) {
+                return const Center(child: Text('Error'));
+              }
 
-          final posts = snapshot.data!;
+              final posts = snapshot.data;
 
-          return ListView.builder(
-            itemCount: posts.length,
-            itemBuilder: (context, index) {
-              final post = posts[index];
-              final isWishlisted = wishlistPostIds.contains(post.id);
-
-              return Card(
-                color: Colors.grey[850],
-                margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
-                child: ListTile(
-                  leading: Tooltip(
-                    message: post.isActive ? 'Active' : 'Inactive',
-                    child: Icon(
-                      post.isActive ? Icons.check_circle : Icons.crisis_alert_sharp,
-                      color: post.isActive ? Colors.green : Colors.red,
-                    ),
-                  ),
-                  title: Text(post.title, style: const TextStyle(color: Colors.white)),
-                  subtitle: Text(
-                    '${post.description ?? ''}\n\$${post.price}',
-                    style: const TextStyle(color: Colors.white70),
-                  ),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      if (post.userId != currentUser!.id)
-                        IconButton(
-                          icon: Icon(
-                            isWishlisted ? Icons.favorite : Icons.favorite_border,
-                            color: isWishlisted ? Colors.red : Colors.grey,
+              return GridView.builder(
+                itemCount: posts?.length,
+                itemBuilder: (context, index) {
+                  final post = Post.fromMap(posts![index]);
+                  final isWishlisted = wishlistPostIds.contains(post.id);
+                  return Card(
+                      borderOnForeground: false,
+                      color: Colors.grey[850],
+                      clipBehavior: Clip.hardEdge,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.all(Radius.circular(5))),
+                      child: GestureDetector(
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => PostDetails(post: post),
                           ),
-                          onPressed: () => toggleWishlist(post.id!, post.userId),
                         ),
-                      if (post.userId == currentUser!.id)
-                        IconButton(
-                          icon: const Icon(Icons.edit_note, color: Colors.blue),
-                          onPressed: () => editPostDialog(post),
-                        ),
-                      if (post.userId == currentUser!.id)
-                        IconButton(
-                          icon: const Icon(Icons.delete, color: Colors.red),
-                          onPressed: () => _deletePost(post.id!),
-                        ),
-                    ],
-                  ),
-                  onTap: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => PostDetails(post: post),
-                    ),
-                  ),
-                ),
+                        child: GridTile(
+                            footer: GridTileBar(
+                              backgroundColor: Colors.grey[600],
+                              title: Text(post.title,
+                                  style: const TextStyle(color: Colors.white)),
+                              subtitle: Text(
+                                '\$${post.price}',
+                                style:
+                                    TextStyle(color: Colors.greenAccent[400]),
+                              ),
+                              //   leading: Tooltip(
+                              //     message: post.isActive ? 'Active' : 'Inactive',
+                              //     child: Icon(
+                              //       post.isActive
+                              //           ? Icons.check_circle
+                              //           : Icons.crisis_alert_sharp,
+                              //       color:
+                              //           post.isActive ? Colors.green : Colors.red,
+                              //     ),
+                              //   ),
+                              trailing: (post.userId != currentUser!.id)
+                                  ? IconButton(
+                                      icon: Icon(
+                                        isWishlisted
+                                            ? Icons.favorite
+                                            : Icons.favorite_border,
+                                        color: isWishlisted
+                                            ? Colors.red
+                                            : Colors.grey,
+                                      ),
+                                      onPressed: () => pickWishlist(post.id!),
+                                    )
+                                  : IconButton(
+                                      icon: const Icon(Icons.delete,
+                                          color: Colors.red),
+                                      onPressed: () => _deletePost(post.id!),
+                                    ),
+
+                              //   Row(
+                              //     mainAxisSize: MainAxisSize.min,
+                              //     children: [
+                              // if (post.userId != currentUser!.id)
+                              //   IconButton(
+                              //     icon: Icon(
+                              //       isWishlisted
+                              //           ? Icons.favorite
+                              //           : Icons.favorite_border,
+                              //       color: isWishlisted
+                              //           ? Colors.red
+                              //           : Colors.grey,
+                              //     ),
+                              //     onPressed: () =>
+                              //         toggleWishlist(post.id!, post.userId),
+                              //   ),
+                              //   if (post.userId == currentUser!.id)
+                              //     IconButton(
+                              //       icon: const Icon(Icons.edit_note,
+                              //           color: Colors.blue),
+                              //       onPressed: () => editPostDialog(post),
+                              //     ),
+                              //   if (post.userId == currentUser!.id)
+                              //     IconButton(
+                              //       icon: const Icon(Icons.delete,
+                              //           color: Colors.red),
+                              //       onPressed: () => _deletePost(post.id!),
+                              //     ),
+                              // ],
+                              //   ),
+                            ),
+                            child: FadeInImage(
+                                placeholder: AssetImage('assets/loading.png'),
+                                image: NetworkImage(
+                                    'https://images.immediate.co.uk/production/volatile/sites/30/2017/01/Bunch-of-bananas-67e91d5.jpg'))),
+                      ));
+                },
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2, crossAxisSpacing: 2, mainAxisSpacing: 2),
               );
-            },
-          );
-        },
-      ),
-    );
+            }));
   }
 }

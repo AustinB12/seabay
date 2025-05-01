@@ -1,23 +1,17 @@
+import 'package:seabay_app/api/posts.dart';
 import 'package:seabay_app/api/types.dart';
+import 'package:seabay_app/api/wishlists.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-class DbService {
-  final SupabaseClient _client = Supabase.instance.client;
+final _client = Supabase.instance.client;
 
+class DbService {
   String? userId;
 
   DbService() : userId = null;
 
   static String? get currentUserId =>
       Supabase.instance.client.auth.currentSession?.user.id;
-
-  final usersPosts = currentUserId!.isNotEmpty
-      ? Supabase.instance.client
-          .from('Posts')
-          .select('*')
-          .eq('user_id', currentUserId ?? '')
-          .asStream()
-      : null;
 
   final usersWishlists = currentUserId!.isNotEmpty
       ? Supabase.instance.client
@@ -27,8 +21,20 @@ class DbService {
           .asStream()
       : null;
 
-  final allPosts =
-      Supabase.instance.client.from('Posts').select('*').asStream();
+  final p = Supabase.instance.client.from('Posts').stream(primaryKey: [
+    'id'
+  ]).map((posts) => posts.map((postMap) => Post.fromMap(postMap)).toList());
+
+  final allPosts = Supabase.instance.client
+      .from('Posts')
+      .select('*')
+      .order('created_at', ascending: false)
+      .asStream()
+      .map((posts) => posts.map((postMap) => Post.fromMap(postMap)).toList());
+
+//   final allPosts = Supabase.instance.client.from('Posts').stream(primaryKey: [
+//     'id'
+//   ]).map((posts) => posts.map((postMap) => Post.fromMap(postMap)).toList());
 
   //* Get Posts
   Future<List<Post>> getPosts() async {
@@ -63,16 +69,6 @@ class DbService {
         .inFilter('id', ids);
 
     return result.map<Post>((row) => Post.fromMap(row)).toList();
-  }
-
-  //* Create Post
-  Future createPost(Post newPost) async {
-    await _client.from('Posts').insert({
-      'title': newPost.title,
-      'description': newPost.description,
-      'price': newPost.price,
-      'user_id': newPost.userId
-    });
   }
 
 //* Mark Post Inactive
@@ -153,43 +149,39 @@ class DbService {
 //todo fix this
   //* Update Post
   Future<bool> updatePost(Post post) async {
-  final title = post.title;
-  final description = post.description;
-  final price = post.price;
+    final title = post.title;
+    final description = post.description;
+    final price = post.price;
 
-  if (title == null || title.isEmpty) {
-    return false;
-  }
+    if (title == null || title.isEmpty) {
+      return false;
+    }
 
-  if (description == null || description.isEmpty) {
-    return false;
-  }
+    if (description == null || description.isEmpty) {
+      return false;
+    }
 
-  if (price == null || price <= 0) {
-    return false;
-  }
+    if (price == null || price <= 0) {
+      return false;
+    }
 
-  final results = await _client.from('Posts').update({
-    'title': title,
-    'description': description,
-    'price': price,
-    'is_active': post.isActive,
-    'images': post.imageUrls ?? [],
-  }).eq('id', post.id ?? 0).select();
+    final results = await _client
+        .from('Posts')
+        .update({
+          'title': title,
+          'description': description,
+          'price': price,
+          'is_active': post.isActive,
+          'images': post.imageUrls ?? [],
+        })
+        .eq('id', post.id ?? 0)
+        .select();
 
-  if (results == null || results.isEmpty) {
-    return false;
-  }
-  
-  return true;
-  }
+    if (results == null || results.isEmpty) {
+      return false;
+    }
 
-  //* Delete Post
-  Future<bool> deletePostById(int postId) async {
-    final result =
-        await _client.from('Posts').delete().eq('id', postId).select();
-
-    return result.isEmpty;
+    return true;
   }
 
   //* Get Wishlists
@@ -299,14 +291,5 @@ class DbService {
         await _client.from('Wish_Lists').delete().eq('id', wishlistId).select();
 
     return result.isEmpty;
-  }
-
-  //* Add Post To Wishlist
-  Future<bool> addPostToWishlist(int postId, int wishlistId) async {
-    final result = await _client
-        .from('Posts_To_Wishlists')
-        .insert({'wishlist_id': wishlistId, 'post_id': postId}).select();
-
-    return result.isNotEmpty;
   }
 }
