@@ -31,6 +31,14 @@ class WishlistService {
     return result.map((data) => WishList.fromMap(data)).toList();
   }
 
+  Future<int> getUserWishlistId() async {
+    var result = await _client
+        .from('Wish_Lists')
+        .select('id')
+        .eq('user_id', currentUserId);
+    return result.first['id'];
+  }
+
   Future getPostsTheUserWishlisted() async {
     //* Grab all the users Wishlists
     final wlIds = await _client
