@@ -1,5 +1,4 @@
 import 'package:seabay_app/api/wishlists.dart';
-
 import 'login.dart';
 import 'profile.dart';
 import 'create_post.dart';
@@ -28,36 +27,77 @@ class _HomePageState extends State<HomePage> {
   List<int>? postIdsTheUserWishlisted;
   List<WishList> usersWishlists = [];
 
+  late List<Post> _allPosts;
+  late List<WishList> _usersWishlists;
+  late List<int> _wishlistPostIds;
+
+  late Future<List<Post>> _postsFuture;
+  var _loading = true;
+
   @override
   void initState() {
     loadWlPosts();
+    _getPosts();
+    _getUsersWishlistedPostIds();
     super.initState();
+  }
+
+  Future<void> _getPosts() async {
+    setState(() {
+      _loading = true;
+    });
+    try {
+      List<Post> data = await postsDB.getPosts();
+      _allPosts = data;
+    } catch (error) {
+      if (mounted) {
+        // context.showSnackBar('Unexpected error occurred', isError: true);
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _loading = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _getUsersWishlistedPostIds() async {
+    setState(() {
+      _loading = true;
+    });
+    try {
+      List<int> data = await wlDB.getPostsTheUserWishlisted();
+      _wishlistPostIds = data;
+    } catch (error) {
+      if (mounted) {
+        // context.showSnackBar('Unexpected error occurred', isError: true);
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _loading = false;
+        });
+      }
+    }
+  }
+
+  void toggleWishlist(int postId, int wlId) async {
+    final isWishlisted = _wishlistPostIds.contains(postId);
+
+    if (isWishlisted) {
+      wlDB.removePostFromWishlist(postId);
+    } else {
+      wlDB.addPostToWishlist(postId, wlId);
+    }
+    // _getPosts();
+    // _getUsersWishlistedPostIds();
+    Navigator.pop(context);
   }
 
   Future<void> loadWlPosts() async {
     postIdsTheUserWishlisted = await wlDB.getPostsTheUserWishlisted();
     usersWishlists = await wlDB.getUsersWishlists();
-  }
-
-  void toggleWishlist(int postId, int wlId) async {
-    // if (postOwnerId == currentUser!.id) {
-    //   ScaffoldMessenger.of(context).showSnackBar(
-    //     const SnackBar(content: Text('You can’t wishlist your own post.')),
-    //   );
-    //   return;
-    // }
-
-    final isWishlisted = postIdsTheUserWishlisted!.contains(postId);
-
-    if (isWishlisted) {
-      wlDB.removePostFromWishlist(postId);
-      //   await db.removePostIdFromWishlistJson(postId);
-    } else {
-      wlDB.addPostToWishlist(postId, wlId);
-      //   await db.addPostIdtoWishListJson(postId);
-    }
-    await loadWlPosts();
-    Navigator.pop(context);
   }
 
   void _logout(BuildContext context) {
@@ -117,122 +157,138 @@ class _HomePageState extends State<HomePage> {
                 ),
               ],
             ));
-  }
+    Future<void> _refreshPosts() async {
+      setState(() {
+        _postsFuture = db.getPosts();
+      });
+    }
 
-  void _deletePost(int postId) {
-    showDialog(
+    void _deletePost(int postId) {
+      showDialog(
         context: context,
         builder: (context) => AlertDialog(
-                title: const Text('Delete Post'),
-                content: const Text('Are you sure you to delete this post?'),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: const Text('Cancel'),
-                  ),
-                  TextButton(
-                      onPressed: () async {
-                        postsDB.deletePostById(postId);
-
-                        Navigator.pop(context);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                              content: Text('Post deleted successfully!')),
-                        );
-                      },
-                      child: const Text('Delete',
-                          style: TextStyle(color: Colors.red)))
-                ]));
-  }
-
-  void editPostDialog(Post post) {
-    final titleController = TextEditingController(text: post.title);
-    final descController = TextEditingController(text: post.description);
-    final priceController = TextEditingController(text: post.price?.toString());
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Edit Post'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: titleController,
-              decoration: const InputDecoration(labelText: 'Title'),
-            ),
-            TextField(
-              controller: descController,
-              decoration: const InputDecoration(labelText: 'Description'),
-            ),
-            TextField(
-              controller: priceController,
-              decoration: const InputDecoration(labelText: 'Price'),
-              keyboardType: TextInputType.number,
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              final updatedPost = Post(
-                id: post.id,
-                title: titleController.text,
-                description: descController.text,
-                price: int.tryParse(priceController.text) ?? 0,
-                isActive: post.isActive,
-                userId: post.userId,
-                imageUrls: post.imageUrls,
-              );
-              await postsDB.updatePost(updatedPost);
-              //   final updatedPosts = await db.getPosts();
-
-              //   setState(() {
-              //     posts = updatedPosts;
-              //   });
-
-              Navigator.pop(context);
-            },
-            child: const Text('Save'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-        appBar: AppBar(
-          title: const Text('Homepage'),
-          automaticallyImplyLeading: false,
+          title: const Text('Delete Post'),
+          content: const Text('Are you sure you want to delete this post?'),
           actions: [
-            IconButton(
-              icon: const Icon(Icons.add),
-              onPressed: () => _goToCreatePost(context),
-              tooltip: 'Create Post',
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
             ),
-            IconButton(
-              icon: const Icon(Icons.person),
-              onPressed: () => _goToProfile(context),
-              tooltip: 'Go to profile',
-            ),
-            IconButton(
-              icon: const Icon(Icons.logout),
-              onPressed: () => _logout(context),
-              tooltip: 'Sign Out',
+            TextButton(
+              onPressed: () async {
+                await postsDB.deletePostById(postId);
+                Navigator.pop(context);
+                await _refreshPosts();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                      content:
+                          Center(child: Text('Post deleted successfully!'))),
+                );
+              },
+              child: const Text('Delete', style: TextStyle(color: Colors.red)),
             ),
           ],
         ),
-        body: RefreshIndicator(
-          onRefresh: () async {
-            return loadWlPosts();
-          },
-          child: StreamBuilder(
+      );
+    }
+
+    void editPostDialog(Post post) {
+      final titleController = TextEditingController(text: post.title);
+      final descController = TextEditingController(text: post.description);
+      final priceController =
+          TextEditingController(text: post.price?.toString());
+
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Edit Post'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: titleController,
+                decoration: const InputDecoration(labelText: 'Title'),
+              ),
+              TextField(
+                controller: descController,
+                decoration: const InputDecoration(labelText: 'Description'),
+              ),
+              TextField(
+                controller: priceController,
+                decoration: const InputDecoration(labelText: 'Price'),
+                keyboardType: TextInputType.number,
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                final updatedPost = Post(
+                  id: post.id,
+                  title: titleController.text,
+                  description: descController.text,
+                  price: int.tryParse(priceController.text) ?? 0,
+                  isActive: post.isActive,
+                  userId: post.userId,
+                  imageUrls: post.imageUrls,
+                );
+                await postsDB.updatePost(updatedPost);
+                //   final updatedPosts = await db.getPosts();
+
+                //   setState(() {
+                //     posts = updatedPosts;
+                //   });
+
+                Navigator.pop(context);
+              },
+              child: const Text('Save'),
+            ),
+          ],
+        ),
+      );
+    }
+
+    String _commasAddedToPrice(int? price) {
+      if (price == null) return '';
+      return price.toString().replaceAllMapped(
+            RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+            (Match numbers) => '${numbers[1]},',
+          );
+    }
+
+    @override
+    Widget build(BuildContext context) {
+      return Scaffold(
+          appBar: AppBar(
+            title: const Text('Homepage'),
+            automaticallyImplyLeading: false,
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.add),
+                onPressed: () => _goToCreatePost(context),
+                tooltip: 'Create Post',
+              ),
+              IconButton(
+                icon: const Icon(Icons.person),
+                onPressed: () => _goToProfile(context),
+                tooltip: 'Go to profile',
+              ),
+              IconButton(
+                icon: const Icon(Icons.logout),
+                onPressed: () => _logout(context),
+                tooltip: 'Sign Out',
+              ),
+            ],
+          ),
+          body: RefreshIndicator(
+            onRefresh: () async {
+              return loadWlPosts();
+            },
+            child: StreamBuilder(
               stream: postsDB.postsStream,
               builder: (context, snapshot) {
                 print(postIdsTheUserWishlisted);
@@ -244,114 +300,158 @@ class _HomePageState extends State<HomePage> {
                   return const Center(child: Text('Error'));
                 }
 
-                List<Post>? posts =
-                    snapshot.data?.map((datum) => Post.fromMap(datum)).toList();
+                Iterable<Post>? postss =
+                    snapshot.data?.map((datum) => Post.fromMap(datum));
+                List<Post> posts =
+                    postss!.where((post) => post.isActive).toList();
 
-                if (posts == null || posts.isEmpty) {
+                if (posts.isEmpty) {
                   return Center(child: Text("No Posts"));
                 }
-
-                return GridView.builder(
+                return ListView.builder(
                   itemCount: posts.length,
                   itemBuilder: (context, index) {
-                    Post post = posts[index];
-                    bool isWishlisted = wishlistPostIds.contains(post.id);
-                    print('${isWishlisted ? 'yep' : 'nope'}');
+                    final post = posts[index];
+                    final isWishlisted = wishlistPostIds.contains(post.id);
                     return Card(
-                        borderOnForeground: false,
-                        color: Colors.grey[850],
-                        clipBehavior: Clip.hardEdge,
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.all(Radius.circular(5))),
-                        child: GestureDetector(
-                          onTap: () => Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => PostDetails(post: post),
-                            ),
+                      color: Colors.grey[900],
+                      margin: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 6),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12)),
+                      child: InkWell(
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => PostDetails(post: post),
                           ),
-                          child: GridTile(
-                              footer: GridTileBar(
-                                backgroundColor: Colors.grey[600],
-                                title: Text(post.title,
-                                    style:
-                                        const TextStyle(color: Colors.white)),
-                                subtitle: Text(
-                                  '\$${post.price}',
-                                  style:
-                                      TextStyle(color: Colors.greenAccent[400]),
-                                ),
-                                //   leading: Tooltip(
-                                //     message: post.isActive ? 'Active' : 'Inactive',
-                                //     child: Icon(
-                                //       post.isActive
-                                //           ? Icons.check_circle
-                                //           : Icons.crisis_alert_sharp,
-                                //       color:
-                                //           post.isActive ? Colors.green : Colors.red,
-                                //     ),
-                                //   ),
-                                trailing: (post.userId != currentUser!.id)
-                                    ? IconButton(
-                                        icon: Icon(
-                                          isWishlisted
-                                              ? Icons.favorite
-                                              : Icons.favorite_border,
-                                          color: isWishlisted
-                                              ? Colors.red
-                                              : Colors.grey,
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(12.0),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Image preview (placeholder if no image)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 11.0),
+                                child: SizedBox(
+                                    height: 80,
+                                    child: Center(
+                                      child: Container(
+                                        width: 60,
+                                        height: 60,
+                                        decoration: BoxDecoration(
+                                          borderRadius:
+                                              BorderRadius.circular(8),
+                                          color: Colors.grey[800],
                                         ),
-                                        onPressed: () => pickWishlist(post.id!),
-                                      )
-                                    : IconButton(
-                                        icon: const Icon(Icons.delete,
-                                            color: Colors.red),
-                                        onPressed: () => _deletePost(post.id!),
+                                        child: post.imageUrls != null &&
+                                                post.imageUrls!.isNotEmpty
+                                            ? ClipRRect(
+                                                borderRadius:
+                                                    BorderRadius.circular(8),
+                                                child: Image.network(
+                                                  post.imageUrls!.first,
+                                                  fit: BoxFit.cover,
+                                                ),
+                                              )
+                                            : const Icon(Icons.image,
+                                                color: Colors.white30),
                                       ),
-
-                                //   Row(
-                                //     mainAxisSize: MainAxisSize.min,
-                                //     children: [
-                                // if (post.userId != currentUser!.id)
-                                //   IconButton(
-                                //     icon: Icon(
-                                //       isWishlisted
-                                //           ? Icons.favorite
-                                //           : Icons.favorite_border,
-                                //       color: isWishlisted
-                                //           ? Colors.red
-                                //           : Colors.grey,
-                                //     ),
-                                //     onPressed: () =>
-                                //         toggleWishlist(post.id!, post.userId),
-                                //   ),
-                                //   if (post.userId == currentUser!.id)
-                                //     IconButton(
-                                //       icon: const Icon(Icons.edit_note,
-                                //           color: Colors.blue),
-                                //       onPressed: () => editPostDialog(post),
-                                //     ),
-                                //   if (post.userId == currentUser!.id)
-                                //     IconButton(
-                                //       icon: const Icon(Icons.delete,
-                                //           color: Colors.red),
-                                //       onPressed: () => _deletePost(post.id!),
-                                //     ),
-                                // ],
-                                //   ),
+                                    )),
                               ),
-                              child: FadeInImage(
-                                  placeholder: AssetImage('assets/loading.png'),
-                                  image: NetworkImage(
-                                      'https://images.immediate.co.uk/production/volatile/sites/30/2017/01/Bunch-of-bananas-67e91d5.jpg'))),
-                        ));
+
+                              const SizedBox(width: 12),
+
+                              // Title, desc, price
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Center(
+                                        child: Text(post.title,
+                                            style: const TextStyle(
+                                                fontSize: 24,
+                                                fontWeight: FontWeight.w600,
+                                                color: Colors.white))),
+                                    const SizedBox(height: 4),
+                                    Text(post.description ?? '',
+                                        style: const TextStyle(
+                                            color: Colors.white70,
+                                            fontSize: 14),
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis),
+                                    const SizedBox(height: 6),
+                                    Center(
+                                        child: Text(
+                                            '\$${_commasAddedToPrice(post.price)}',
+                                            style: const TextStyle(
+                                                fontSize: 20,
+                                                fontWeight: FontWeight.bold,
+                                                color: Colors.greenAccent))),
+                                  ],
+                                ),
+                              ),
+
+                              const SizedBox(width: 8),
+
+                              // Actions (wishlist, edit, delete)
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.end,
+                                children: [
+                                  Tooltip(
+                                    message:
+                                        post.isActive ? 'Active' : 'Inactive',
+                                    child: Icon(
+                                      post.isActive
+                                          ? Icons.check_circle
+                                          : Icons.crisis_alert_sharp,
+                                      color: post.isActive
+                                          ? Colors.green
+                                          : Colors.red,
+                                      size: 20,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 6),
+                                  if (post.userId != currentUser!.id)
+                                    IconButton(
+                                      icon: Icon(
+                                        isWishlisted
+                                            ? Icons.favorite
+                                            : Icons.favorite_border,
+                                        color: isWishlisted
+                                            ? Colors.red
+                                            : Colors.grey,
+                                      ),
+                                      onPressed: () => pickWishlist(post.id!),
+                                      iconSize: 20,
+                                    ),
+                                  if (post.userId == currentUser!.id)
+                                    IconButton(
+                                      icon: const Icon(Icons.edit,
+                                          color: Colors.blue),
+                                      onPressed: () => editPostDialog(post),
+                                      iconSize: 20,
+                                    ),
+                                  if (post.userId == currentUser!.id)
+                                    IconButton(
+                                      icon: const Icon(Icons.delete,
+                                          color: Colors.red),
+                                      onPressed: () => _deletePost(post.id!),
+                                      iconSize: 20,
+                                    ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    );
                   },
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      crossAxisSpacing: 2,
-                      mainAxisSpacing: 2),
                 );
-              }),
-        ));
+              },
+            ),
+          ));
+    }
   }
 }

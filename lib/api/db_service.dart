@@ -39,7 +39,7 @@ class DbService {
   Future<List<Post>> getPosts() async {
     final results = await _client
         .from('Posts')
-        .select('id, title, description, price, is_active, user_id')
+        .select('id, title, description, price, is_active, user_id, images')
         .order('created_at', ascending: false)
         .limit(50);
 
@@ -68,6 +68,17 @@ class DbService {
         .inFilter('id', ids);
 
     return result.map<Post>((row) => Post.fromMap(row)).toList();
+  }
+
+  //* Create Post
+  Future createPost(Post newPost) async {
+    await _client.from('Posts').insert({
+      'title': newPost.title,
+      'description': newPost.description,
+      'price': newPost.price,
+      'user_id': newPost.userId,
+      'images': newPost.imageUrls ?? []
+    });
   }
 
 //* Mark Post Inactive

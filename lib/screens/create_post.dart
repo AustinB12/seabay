@@ -31,10 +31,9 @@ class _CreatePostPageState extends State<CreatePostPage> {
   Future<void> _createPost() async {
     final title = _titleController.text.trim();
     final description = _descriptionController.text.trim();
-    final inputPrice = _priceController.text.trim();
+    final inputPrice = _priceController.text.trim().replaceAll(',', '');
     final priceParsed = double.tryParse(inputPrice);
 
-    // final price = (double.tryParse(_priceController.text) ?? 0.0).toInt();
     if (title.isEmpty || description.isEmpty || inputPrice == 0) {
       setState(() {
         errorMessage = 'Please fill in all fields.';
@@ -55,8 +54,10 @@ class _CreatePostPageState extends State<CreatePostPage> {
       title: title,
       description: description,
       price: price,
-      isActive: true, // Default value (active post)
+      isActive: true,
       userId: auth.getCurrentUserId() as String,
+      imageUrls:
+          postImgUrl != null && postImgUrl!.isNotEmpty ? [postImgUrl!] : [],
     );
 
     try {
@@ -95,7 +96,7 @@ class _CreatePostPageState extends State<CreatePostPage> {
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(successMessage)),
+        SnackBar(content: Center(child: Text(successMessage))),
       );
 
       if (context.mounted) {
@@ -160,9 +161,6 @@ class _CreatePostPageState extends State<CreatePostPage> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            ElevatedButton(
-                onPressed: () => pickImage(),
-                child: const Text('Upload Image')),
             TextField(
               controller: _titleController,
               decoration: const InputDecoration(labelText: 'Title'),
@@ -177,6 +175,9 @@ class _CreatePostPageState extends State<CreatePostPage> {
               keyboardType: TextInputType.number,
             ),
             const SizedBox(height: 20),
+            ElevatedButton(
+                onPressed: () => pickImage(),
+                child: const Text('Upload Image')),
             ElevatedButton(
               onPressed: _createPost,
               child: const Text('Create Post'),
