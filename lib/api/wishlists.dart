@@ -6,20 +6,18 @@ class WishlistService {
   static String get currentUserId =>
       Supabase.instance.client.auth.currentUser!.id;
 
-  final postsToWishlistsStream =
-      _client.from('Posts_To_Wishlists').stream(primaryKey: ['id']);
-
   Future addPostToWishlist(int postId, int listId) async {
     await _client
         .from('Posts_To_Wishlists')
         .insert({'wishlist_id': listId, 'post_id': postId});
   }
 
-  Future removePostFromWishlist(int postId, int listId) async {
+  Future removePostFromWishlist(int postId) async {
     await _client
         .from('Posts_To_Wishlists')
         .delete()
-        .eq('wishlist_id', listId)
+        .inFilter('wishlist_id',
+            (await getUsersWishlists()).map((x) => x.id).toList())
         .eq('post_id', postId);
   }
 
@@ -28,10 +26,32 @@ class WishlistService {
         .from('Wish_Lists')
         .select('*')
         .eq('user_id', currentUserId);
-
     if (result.isEmpty) return [];
 
     return result.map((data) => WishList.fromMap(data)).toList();
+  }
+
+  Future getPostsTheUserWishlisted() async {
+    //* Grab all the users Wishlists
+    final wlIds = await _client
+        .from('Wish_Lists')
+        .select('id')
+        .eq('user_id', _client.auth.currentUser!.id);
+
+    //* Map it to a list of IDs
+    final ids = wlIds.map((w) => w['id'] as int).toList();
+    //* Use that list to find the posts
+    final postIdsInUsersWishlists = await _client
+        .from('Posts_To_Wishlists')
+        .select('post_id')
+        .inFilter('wishlist_id', ids);
+
+    //* Map that to a list of post IDs
+    final postIds =
+        postIdsInUsersWishlists.map((z) => z['post_id'] as int).toList();
+
+    //* The IDs of posts the user has wishlisted
+    return postIds;
   }
 }
 
@@ -65,3 +85,5 @@ class WishList {
     };
   }
 }
+
+class PostsToWishlists {}

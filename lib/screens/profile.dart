@@ -5,6 +5,7 @@ import 'package:seabay_app/api/types.dart';
 import 'package:seabay_app/api/wishlists.dart';
 import 'package:seabay_app/auth/auth.dart';
 import 'package:seabay_app/components/profile_picture.dart';
+import 'package:seabay_app/screens/post_details.dart';
 import 'login.dart';
 import 'homepage.dart';
 
@@ -51,6 +52,16 @@ class _ProfilePageState extends State<ProfilePage> {
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(builder: (context) => const HomePage()),
+    );
+  }
+
+  void _goToPostDetails(BuildContext context, Post post) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+          builder: (context) => PostDetails(
+                post: post,
+              )),
     );
   }
 
@@ -133,7 +144,7 @@ class _ProfilePageState extends State<ProfilePage> {
                           imageUrls: post.imageUrls,
                         );
 
-                        await db.updatePost(updatedPost);
+                        await postsDB.updatePost(updatedPost);
                         await _refreshUserPosts();
                         Navigator.pop(context);
                         setState(() {
@@ -190,7 +201,7 @@ class _ProfilePageState extends State<ProfilePage> {
                         imageUrls: post.imageUrls,
                       );
 
-                      await db.updatePost(updatedPost);
+                      await postsDB.updatePost(updatedPost);
                       await _refreshUserPosts();
                       Navigator.pop(context);
 
@@ -545,6 +556,7 @@ class _ProfilePageState extends State<ProfilePage> {
                       color: Colors.grey[850],
                       margin: const EdgeInsets.symmetric(vertical: 8),
                       child: ListTile(
+                        onTap: () => _goToPostDetails(context, post),
                         leading: Tooltip(
                           message: post.isActive ? 'Active' : 'Inactive',
                           child: Icon(
@@ -584,7 +596,7 @@ class _ProfilePageState extends State<ProfilePage> {
                               onPressed: () async {
                                 final updated =
                                     post.copyWith(isActive: !post.isActive);
-                                await db.updatePost(updated);
+                                await postsDB.updatePost(updated);
                                 await _refreshUserPosts();
                               },
                             ),

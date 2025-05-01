@@ -24,15 +24,44 @@ class PostsService {
   //TODO createPost
   //* Create Post
   Future createPost(Post newPost) async {
-    await _client.from('Posts').insert({
+    return await _client.from('Posts').insert({
       'title': newPost.title,
       'description': newPost.description,
       'price': newPost.price,
       'user_id': newPost.userId
-    });
+    }).select();
   }
 
-  //TODO updatePost
+  //* Update Post
+  Future updatePost(Post post) async {
+    final title = post.title;
+    final description = post.description;
+    final price = post.price;
+
+    if (title.isEmpty) {
+      return false;
+    }
+
+    if (description == null || description.isEmpty) {
+      return false;
+    }
+
+    if (price == null || price <= 0) {
+      return false;
+    }
+
+    return await _client
+        .from('Posts')
+        .update({
+          'title': title,
+          'description': description,
+          'price': price,
+          'is_active': post.isActive,
+          'images': post.imageUrls ?? [],
+        })
+        .eq('id', post.id ?? 0)
+        .select();
+  }
 
   //TODO addPostToWishlist
 

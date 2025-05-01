@@ -21,6 +21,8 @@ class _CreatePostPageState extends State<CreatePostPage> {
   String errorMessage = '';
   String successMessage = '';
 
+  final List<XFile> _imageFiles = [];
+
   final db = DbService();
   final storage = StorageService();
   final postsDB = PostsService();
@@ -58,7 +60,34 @@ class _CreatePostPageState extends State<CreatePostPage> {
     );
 
     try {
-      postsDB.createPost(newPost);
+      final createdPost = await postsDB.createPost(newPost);
+
+      if (_imageFiles.isNotEmpty) {
+        List<String> publicImageUrls = [];
+        _imageFiles.forEach((img) async {
+          String imageExtension = img.path.split('.').last.toLowerCase();
+          var imageBytes = await img.readAsBytes();
+          var newPostId = createdPost['data'][0]['id'];
+          print('newPostId: $newPostId');
+          var imagePath =
+              '/$newPostId/${DateTime.now().millisecondsSinceEpoch.toString()}';
+          await storage.uploadPostPicBucket(
+              imagePath, imageBytes, imageExtension);
+          String imageUrl = await storage.getPostImageUrl(imagePath);
+          publicImageUrls.add(imageUrl);
+        });
+
+        // Update the post record with the list of image urls
+        postsDB.updatePost(Post(
+            isActive: newPost.isActive,
+            title: newPost.title,
+            userId: newPost.userId,
+            description: newPost.description,
+            id: newPost.id,
+            imageUrls: publicImageUrls,
+            price: newPost.price));
+      }
+
       Navigator.pop(context);
       setState(() {
         errorMessage = '';
@@ -90,7 +119,6 @@ class _CreatePostPageState extends State<CreatePostPage> {
 
   //? IMAGES STUFF
 
-  File? imageFile;
   String? postImgUrl = '';
 
   /// Pick an image to use in the listing
@@ -103,7 +131,8 @@ class _CreatePostPageState extends State<CreatePostPage> {
       return;
     }
     setState(() {
-      imageFile = File(image.path);
+      // Add image to list of uploaded images
+      _imageFiles.add(image);
     });
 
     final imageExtension = image.path.split('.').last.toLowerCase();
