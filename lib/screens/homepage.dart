@@ -22,11 +22,20 @@ class _HomePageState extends State<HomePage> {
   final db = DbService();
 
   late Future<List<Post>> _postsFuture;
+  List<int> wishlistedPostIds = [];
 
   @override
   void initState() {
     super.initState();
     _postsFuture = db.getPosts();
+    loadWishList();
+  }
+
+  void loadWishList() async {
+    final wishlistPosts = await db.loadWishlistedPosts();
+    setState(() {
+      wishlistPostIds = wishlistPosts.map((e) => e.id!).toList();
+    });
   }
 
   void _logout(BuildContext context) {
@@ -168,7 +177,7 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  String _commasAddedToPrice(int? price) {
+String _commasAddedToPrice(int? price) {
   if (price == null) return '';
   return price.toString().replaceAllMapped(
     RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
@@ -218,317 +227,125 @@ class _HomePageState extends State<HomePage> {
               final post = posts[index];
               final isWishlisted = wishlistPostIds.contains(post.id);
 
-              // return Card(
-              //   color: Colors.grey[850],
-              //   margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
-              //   child: ListTile(
-              //     leading: Tooltip(
-              //       message: post.isActive ? 'Active' : 'Inactive',
-              //       child: Icon(
-              //         post.isActive ? Icons.check_circle : Icons.crisis_alert_sharp,
-              //         color: post.isActive ? Colors.green : Colors.red,
-              //       ),
-              //     ),
-              //     title: Text(post.title, style: const TextStyle(color: Colors.white)),
-              //     // subtitle: Text(
-              //     //   '${post.description ?? ''}\n\$${post.price}',
-              //     //   //${(post.imageUrls != null && post.imageUrls!.isNotEmpty) ? 'Click to view image' : 'No image available'}',
-              //     //   style: const TextStyle(color: Colors.white70),
-              //     // ),
-              //     subtitle: Column(
-              //     crossAxisAlignment: CrossAxisAlignment.start,
-              //     children: [
-              //       Text(
-              //         '${post.description ?? ''}\n\$${post.price}',
-              //         style: const TextStyle(color: Colors.white70),
-              //       ),
-              //       const SizedBox(height: 8),
-              //       if (post.imageUrls != null && post.imageUrls!.isNotEmpty)
-              //         Image.network(
-              //           post.imageUrls!.first,
-              //           height: 150,
-              //           width: double.infinity,
-              //           fit: BoxFit.cover,
-              //           errorBuilder: (context, error, stackTrace) =>
-              //               const Text('Failed to load image', style: TextStyle(color: Colors.red)),
-              //         )
-              //       else
-              //         const Text('No image available', style: TextStyle(color: Colors.white38)),
-              //     ],
-              //     ),
-
-              //     //trailing: SizedBox(
-              //     Positioned(
-              //       top: 4,
-              //       right: 4,
-              //       child: Row(
-              //       mainAxisSize: MainAxisSize.min,
-              //       //crossAxisAlignment: CrossAxisAlignment.center,
-              //       children: [
-              //         if (post.userId != currentUser!.id)
-              //           IconButton(
-              //             icon: Icon(
-              //               isWishlisted ? Icons.favorite : Icons.favorite_border,
-              //               color: isWishlisted ? Colors.red : Colors.grey,
-              //             ),
-              //             onPressed: () => toggleWishlist(post.id!, post.userId),
-              //           ),
-              //         if (post.userId == currentUser!.id)
-              //           IconButton(
-              //             icon: const Icon(Icons.edit_note, color: Colors.blue),
-              //             onPressed: () => editPostDialog(post),
-              //           ),
-              //         if (post.userId == currentUser!.id)
-              //           IconButton(
-              //             icon: const Icon(Icons.delete, color: Colors.red),
-              //             onPressed: () => _deletePost(post.id!),
-              //           ),
-              //       ],
-              //     )
-              //     ),
-              //     onTap: () => Navigator.push(
-              //       context,
-              //       MaterialPageRoute(
-              //         builder: (context) => PostDetails(post: post),
-              //       ),
-              //     ),
-              //   ),
-              // );
-              //This does work//
-            //   return Card(
-            //   color: Colors.grey[850],
-            //   margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
-            //   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            //   child: Stack(
-            //     children: [
-            //       Padding(
-            //         padding: const EdgeInsets.all(12.0),
-            //         child: Column(
-            //           crossAxisAlignment: CrossAxisAlignment.start,
-            //           children: [
-            //             Center(
-            //             child:
-            //             Text(post.title, style: const TextStyle(color: Colors.white, fontSize: 24))),
-            //             const SizedBox(height: 4),
-            //             Padding(
-            //               padding: const EdgeInsets.only(left: 12.0, right: 8.0),
-            //               child: Text(
-            //               //'${post.description ?? ''}\n\$${post.price}',
-            //               post.description ?? '',
-            //               style: const TextStyle(color: Colors.white70, fontSize: 16,),
-            //             ),
-            //             ),
-            //             // const SizedBox(height: 8),
-            //             // if (post.imageUrls != null && post.imageUrls!.isNotEmpty)
-            //             //   Image.network(
-            //             //     post.imageUrls!.first,
-            //             //     height: 150,
-            //             //     width: double.infinity,
-            //             //     fit: BoxFit.cover,
-            //             //   )
-            //             const SizedBox(height: 8),
-            //             // Image handling with BoxFit to ensure it fits properly
-            //             if (post.imageUrls != null && post.imageUrls!.isNotEmpty)
-            //               Container(
-            //                 width: double.infinity, // Ensures the image takes full width
-            //                 height: 200, // You can adjust the height as needed
-            //                 decoration: BoxDecoration(
-            //                   borderRadius: BorderRadius.circular(8), // Optional: adds rounded corners
-            //                 ),
-            //                 child: ClipRRect(
-            //                   borderRadius: BorderRadius.circular(8),
-            //                   child: Image.network(
-            //                     post.imageUrls!.first,
-            //                     fit: BoxFit.cover, // Ensures the image covers the container area
-            //                     errorBuilder: (context, error, stackTrace) =>
-            //                         const Text('Failed to load image', style: TextStyle(color: Colors.red)),
-            //                   ),
-            //                 )
-            //               )
-            //             else
-            //             const Center(
-            //               child: 
-            //               Text('No image available', style: TextStyle(color: Colors.white38, fontSize: 18, fontStyle: FontStyle.italic))),
-            //             const SizedBox(height: 8),
-            //             if (post.price != null)
-            //               Center(
-            //                 child: Text(
-            //                   '\$${_commasAddedToPrice(post.price)}',
-            //                   style: const TextStyle(
-            //                     color: Colors.white,
-            //                     fontSize: 20.0,
-            //                     fontWeight: FontWeight.bold,
-            //                   )
-            //                 )
-            //               )
-            //           ],
-            //         ),
-            //       ),
-            //       Positioned(
-            //         top: 4,
-            //         right: 4,
-            //         child: Row(
-            //           children: [
-            //             if (post.userId != currentUser!.id)
-            //               IconButton(
-            //                 icon: Icon(
-            //                   wishlistPostIds.contains(post.id)
-            //                       ? Icons.favorite
-            //                       : Icons.favorite_border,
-            //                   color: wishlistPostIds.contains(post.id)
-            //                       ? Colors.red
-            //                       : Colors.grey,
-            //                 ),
-            //                 onPressed: () => toggleWishlist(post.id!, post.userId),
-            //               ),
-            //             if (post.userId == currentUser!.id)
-            //               IconButton(
-            //                 icon: const Icon(Icons.edit_note, color: Colors.blue),
-            //                 onPressed: () => editPostDialog(post),
-            //               ),
-            //             if (post.userId == currentUser!.id)
-            //               IconButton(
-            //                 icon: const Icon(Icons.delete, color: Colors.red),
-            //                 onPressed: () => _deletePost(post.id!),
-            //               ),
-            //           ],
-            //         ),
-            //       ),
-            //     ],
-            //   ),
-            // );
-
-            // },
-            
-//           );
-//         },
-//       ),
-//     );
-//   }
-// }
-
-                          return Card(
-                                  color: Colors.grey[900],
-                                  margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                  child: InkWell(
-                                    onTap: () => Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) => PostDetails(post: post),
-                                      ),
-                                    ),
-                                    child: Padding(
-                                      padding: const EdgeInsets.all(12.0),
-                                      child: Row(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          // Image preview (placeholder if no image)
-                                          Padding(
-                                            padding: const EdgeInsets.only(top: 11.0),
-                                          child: SizedBox(
-                                            height: 80,
-                                          child: Center(
-                                          child: Container(
-                                            width: 60,
-                                            height: 60,
-                                            decoration: BoxDecoration(
-                                              borderRadius: BorderRadius.circular(8),
-                                              color: Colors.grey[800],
-                                            ),
-                                            child: post.imageUrls != null && post.imageUrls!.isNotEmpty
-                                                ?  ClipRRect(
-                                                  borderRadius: BorderRadius.circular(8),
-                                                  child: Image.network(
-                                                    post.imageUrls!.first,
-                                                    fit: BoxFit.cover,
-                                                  ),
-                                            )
-                                                : const Icon(Icons.image, color: Colors.white30),
-                                          ),
-                                          )
-                                          ),
-                                          ),
-
-                                          const SizedBox(width: 12),
-
-                                          // Title, desc, price
-                                          Expanded(
-                                            child: Column(
-                                              crossAxisAlignment: CrossAxisAlignment.start,
-                                              children: [
-                                                Center(
-                                                child:
-                                                Text(post.title,
-                                                    style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w600, color: Colors.white))),
-                                                const SizedBox(height: 4),
-                                                Text(post.description ?? '',
-                                                    style: const TextStyle(color: Colors.white70, fontSize: 14),
-                                                    maxLines: 2,
-                                                    overflow: TextOverflow.ellipsis),
-                                                const SizedBox(height: 6),
-                                                Center(
-                                                child: Text('\$${_commasAddedToPrice(post.price)}',
-                                                    style: const TextStyle(
-                                                        fontSize: 20,
-                                                        fontWeight: FontWeight.bold,
-                                                        color: Colors.greenAccent))),
-                                              ],
-                                            ),
-                                          ),
-
-                                          const SizedBox(width: 8),
-
-                                          // Actions (wishlist, edit, delete)
-                                          Column(
-                                            crossAxisAlignment: CrossAxisAlignment.end,
-                                            children: [
-                                              Tooltip(
-                                                message: post.isActive ? 'Active' : 'Inactive',
-                                                child: Icon(
-                                                  post.isActive
-                                                      ? Icons.check_circle
-                                                      : Icons.crisis_alert_sharp,
-                                                  color: post.isActive ? Colors.green : Colors.red,
-                                                  size: 20,
-                                                ),
-                                              ),
-                                              const SizedBox(height: 6),
-                                              if (post.userId != currentUser!.id)
-                                                IconButton(
-                                                  icon: Icon(
-                                                    isWishlisted
-                                                        ? Icons.favorite
-                                                        : Icons.favorite_border,
-                                                    color: isWishlisted ? Colors.red : Colors.grey,
-                                                  ),
-                                                  onPressed: () =>
-                                                      toggleWishlist(post.id!, post.userId),
-                                                  iconSize: 20,
-                                                ),
-                                              if (post.userId == currentUser!.id)
-                                                IconButton(
-                                                  icon: const Icon(Icons.edit, color: Colors.blue),
-                                                  onPressed: () => editPostDialog(post),
-                                                  iconSize: 20,
-                                                ),
-                                              if (post.userId == currentUser!.id)
-                                                IconButton(
-                                                  icon: const Icon(Icons.delete, color: Colors.red),
-                                                  onPressed: () => _deletePost(post.id!),
-                                                  iconSize: 20,
-                                                ),
-                                            ],
-                                          ),
-                                        ],
-                                      ),
-                                    ),
+          return Card(
+                  color: Colors.grey[900],
+                  margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  child: InkWell(
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => PostDetails(post: post),
+                      ),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(12.0),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.only(top: 11.0),
+                          child: SizedBox(
+                            height: 80,
+                          child: Center(
+                          child: Container(
+                            width: 60,
+                            height: 60,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(8),
+                              color: Colors.grey[800],
+                            ),
+                            child: post.imageUrls != null && post.imageUrls!.isNotEmpty
+                                ?  ClipRRect(
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: Image.network(
+                                    post.imageUrls!.first,
+                                    fit: BoxFit.cover,
                                   ),
-                                );
-                              },
-                            );
-                                  },
+                                )
+                                : const Icon(Icons.image, color: Colors.white30),
                                 ),
-                              );
-                            }
-                          }
+                              )
+                            ),
+                          ),
+
+                          const SizedBox(width: 12),
+
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Center(
+                                child:
+                                Text(post.title,
+                                    style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w600, color: Colors.white))),
+                                const SizedBox(height: 4),
+                                Text(post.description ?? '',
+                                    style: const TextStyle(color: Colors.white70, fontSize: 14),
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis),
+                                const SizedBox(height: 6),
+                                Center(
+                                child: Text('\$${_commasAddedToPrice(post.price)}',
+                                    style: const TextStyle(
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.greenAccent))),
+                              ],
+                            ),
+                          ),
+
+                          const SizedBox(width: 8),
+
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Tooltip(
+                                message: post.isActive ? 'Active' : 'Inactive',
+                                child: Icon(
+                                  post.isActive
+                                      ? Icons.check_circle
+                                      : Icons.crisis_alert_sharp,
+                                  color: post.isActive ? Colors.green : Colors.red,
+                                  size: 20,
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              if (post.userId != currentUser!.id)
+                                IconButton(
+                                  icon: Icon(
+                                    isWishlisted
+                                        ? Icons.favorite
+                                        : Icons.favorite_border,
+                                    color: isWishlisted ? Colors.red : Colors.grey,
+                                  ),
+                                  onPressed: () =>
+                                      toggleWishlist(post.id!, post.userId),
+                                  iconSize: 20,
+                                ),
+                              if (post.userId == currentUser!.id)
+                                IconButton(
+                                  icon: const Icon(Icons.edit, color: Colors.blue),
+                                  onPressed: () => editPostDialog(post),
+                                  iconSize: 20,
+                                ),
+                              if (post.userId == currentUser!.id)
+                                IconButton(
+                                  icon: const Icon(Icons.delete, color: Colors.red),
+                                  onPressed: () => _deletePost(post.id!),
+                                  iconSize: 20,
+                                ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              },
+            );
+          },
+        ),
+      );
+    }
+  }
