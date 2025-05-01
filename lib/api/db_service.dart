@@ -34,7 +34,7 @@ class DbService {
   Future<List<Post>> getPosts() async {
     final results = await _client
         .from('Posts')
-        .select('id, title, description, price, is_active, user_id')
+        .select('id, title, description, price, is_active, user_id, images')
         .order('created_at', ascending: false)
         .limit(50);
 
@@ -71,7 +71,8 @@ class DbService {
       'title': newPost.title,
       'description': newPost.description,
       'price': newPost.price,
-      'user_id': newPost.userId
+      'user_id': newPost.userId,
+      'images': newPost.imageUrls ?? []
     });
   }
 

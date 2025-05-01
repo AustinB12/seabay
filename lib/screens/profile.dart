@@ -136,7 +136,7 @@ class _ProfilePageState extends State<ProfilePage> {
             Navigator.pop(context);
 
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Post updated successfully.')),
+              const SnackBar(content: Center(child: Text('Post updated successfully.'))),
             );
             setState(() {
               _wishlistPosts = db.loadWishlistedPosts();
