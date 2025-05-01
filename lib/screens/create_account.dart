@@ -31,8 +31,6 @@ class CreateAccountPageState extends State<CreateAccountPage> {
       newUserId = await authService.signUpWithEmailPassword(email, password);
     } catch (e) {
       setState(() {
-        // errorMessage =
-        //     'Account creation failed. Please try again. ${e.toString()}';
         errorMessage =
             'Account creation failed. Please try again.';
       });

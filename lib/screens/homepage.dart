@@ -128,7 +128,7 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
-  void toggleWishlist(int postId, int wlId) async {
+  void toggleWishlist(int postId) async {
     setState(() {
       _loading = true;
     });
@@ -142,7 +142,7 @@ class _HomePageState extends State<HomePage> {
                 Center(child: Text('Post has been removed from wishlist.'))),
       );
     } else {
-      wlDb.addPostToWishlist(postId, wlId);
+      wlDb.addPostToWishlist(postId, _userWishlistId);
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
           content: Center(
               child: Text('Post has been saved. View post on your profile.'))));
@@ -243,54 +243,6 @@ class _HomePageState extends State<HomePage> {
           RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
           (Match numbers) => '${numbers[1]},',
         );
-  }
-
-  void pickWishlist(int postId) async {
-    setState(() {
-      _loading = true;
-    });
-    try {
-      List<WishList> data = await wlDb.getUsersWishlists();
-      _usersWishlists = data;
-    } catch (error) {
-      if (mounted) {
-        // context.showSnackBar('Unexpected error occurred', isError: true);
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _loading = false;
-        });
-      }
-    }
-    showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-              title: const Text('Select Wishlist'),
-              content: Container(
-                width: 100,
-                height: 200,
-                child: ListView.builder(
-                    itemCount: _usersWishlists.length,
-                    itemBuilder: (context, index) {
-                      final wl = _usersWishlists[index];
-                      return Card(
-                        child: ListTile(
-                          onTap: () => toggleWishlist(postId, wl.id),
-                          title: Text(wl.name),
-                          subtitle:
-                              Text('${wl.description.substring(0, 12)}...'),
-                        ),
-                      );
-                    }),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text('Cancel'),
-                ),
-              ],
-            ));
   }
 
   @override
@@ -443,7 +395,9 @@ class _HomePageState extends State<HomePage> {
                                               ? Colors.red
                                               : Colors.grey,
                                         ),
-                                        onPressed: () => pickWishlist(post.id!),
+                                        onPressed: () => toggleWishlist(
+                                          post.id!,
+                                        ),
                                         iconSize: 20,
                                       ),
                                     if (post.userId == currentUser!.id)

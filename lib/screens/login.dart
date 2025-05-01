@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:seabay_app/auth/auth.dart';
 import 'package:seabay_app/screens/create_account.dart';
-//import 'package:seabay_app/screens/dashboard.dart';
 import 'homepage.dart';
 
 class LoginPage extends StatefulWidget {
@@ -46,7 +45,6 @@ class _LoginPageState extends State<LoginPage> {
       );
     } catch (e) {
       setState(() {
-        //errorMessage = 'Login failed. Please try again. ${e.toString()}';
         errorMessage = 'Login failed. Please try again.';
       });
     }
