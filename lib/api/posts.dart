@@ -16,6 +16,12 @@ class PostsService {
       .from('Posts')
       .stream(primaryKey: ['id']).eq('user_id', currentUserId);
 
+  Future<List<Post>> getPosts() async {
+    var results =
+        await _client.from('Posts').select('*').neq('user_id', currentUserId);
+    return results.map((datum) => Post.fromMap(datum)).toList();
+  }
+
   /// Deletes a Post using the ID
   Future deletePostById(int postId) async {
     await _client.from('Posts').delete().eq('id', postId);
