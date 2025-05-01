@@ -35,9 +35,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> loadWlPosts() async {
-    print('here');
     postIdsTheUserWishlisted = await wlDB.getPostsTheUserWishlisted();
-    print(postIdsTheUserWishlisted);
     usersWishlists = await wlDB.getUsersWishlists();
   }
 
@@ -238,30 +236,27 @@ class _HomePageState extends State<HomePage> {
               stream: postsDB.postsStream,
               builder: (context, snapshot) {
                 print(postIdsTheUserWishlisted);
-                if (!snapshot.hasData && !snapshot.hasError) {
+                if (!snapshot.hasData && !snapshot.hasError ||
+                    snapshot.data == null) {
                   return const Center(child: CircularProgressIndicator());
                 }
                 if (snapshot.hasError) {
                   return const Center(child: Text('Error'));
                 }
 
-                final posts = snapshot.data;
+                List<Post>? posts =
+                    snapshot.data?.map((datum) => Post.fromMap(datum)).toList();
 
-                final mappedPosts = posts!
-                    .map((p) => {
-                          'post': Post.fromMap(p),
-                          'wishlisted': postIdsTheUserWishlisted!
-                              .contains(Post.fromMap(p).id)
-                        })
-                    .toList();
+                if (posts == null || posts.isEmpty) {
+                  return Center(child: Text("No Posts"));
+                }
 
                 return GridView.builder(
-                  itemCount: mappedPosts.length,
+                  itemCount: posts.length,
                   itemBuilder: (context, index) {
-                    Post post = mappedPosts[index]['post'] as Post;
-                    bool isWishlisted =
-                        mappedPosts[index]['wishlisted'] as bool;
-                    print('${isWishlisted ? 'yep' : 'nopoe'}');
+                    Post post = posts[index];
+                    bool isWishlisted = wishlistPostIds.contains(post.id);
+                    print('${isWishlisted ? 'yep' : 'nope'}');
                     return Card(
                         borderOnForeground: false,
                         color: Colors.grey[850],
