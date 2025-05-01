@@ -17,8 +17,7 @@ class PostsService {
       .stream(primaryKey: ['id']).eq('user_id', currentUserId);
 
   Future<List<Post>> getPosts() async {
-    var results =
-        await _client.from('Posts').select('*').neq('user_id', currentUserId);
+    var results = await _client.from('Posts').select('*');
     return results.map((datum) => Post.fromMap(datum)).toList();
   }
 
