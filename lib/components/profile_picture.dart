@@ -25,7 +25,7 @@ Future pickImage() async {
   final imageBytes = await image.readAsBytes();
   final userId = auth.getCurrentUserId();
   final imagePath =
-      '/$userId/${DateTime.now().millisecondsSinceEpoch.toString()}';
+      '$userId/${DateTime.now().millisecondsSinceEpoch.toString()}';
 
   storage.uploadProfilePicBucket(imagePath, imageBytes, imageExtension);
 
